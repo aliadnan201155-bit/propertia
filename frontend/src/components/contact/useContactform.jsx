@@ -27,6 +27,12 @@ export default function useContactForm() {
       newErrors.email = 'Please enter a valid email address';
     }
 
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (formData.phone.length !== 11) {
+      newErrors.phone = 'Phone number must be exactly 11 digits';
+    }
+
     if (!formData.message.trim()) {
       newErrors.message = 'Message is required';
     }

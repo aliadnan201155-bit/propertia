@@ -293,27 +293,27 @@ const Navbar = () => {
 
                           {/* Menu Items */}
                           <div className="py-2">
-                            <motion.button
+                            {/* <motion.button
                               whileHover={{ x: 4, backgroundColor: "rgb(243 244 246)" }}
                               className="w-full px-6 py-3 text-left text-sm text-gray-700 hover:text-blue-600 flex items-center space-x-3 transition-colors"
                             >
                               <UserCircle className="w-4 h-4" />
                               <span>My Profile</span>
-                            </motion.button>
-                            <motion.button
+                            </motion.button> */}
+                            {/* <motion.button
                               whileHover={{ x: 4, backgroundColor: "rgb(243 244 246)" }}
                               className="w-full px-6 py-3 text-left text-sm text-gray-700 hover:text-blue-600 flex items-center space-x-3 transition-colors"
                             >
                               <Heart className="w-4 h-4" />
                               <span>Saved Properties</span>
-                            </motion.button>
-                            <motion.button
+                            </motion.button> */}
+                            {/* <motion.button
                               whileHover={{ x: 4, backgroundColor: "rgb(243 244 246)" }}
                               className="w-full px-6 py-3 text-left text-sm text-gray-700 hover:text-blue-600 flex items-center space-x-3 transition-colors"
                             >
                               <Settings className="w-4 h-4" />
                               <span>Settings</span>
-                            </motion.button>
+                            </motion.button> */}
                             <div className="border-t border-gray-100 my-2" />
                             <motion.button
                               whileHover={{ x: 4, backgroundColor: "rgb(254 242 242)" }}

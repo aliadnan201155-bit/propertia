@@ -228,26 +228,49 @@ const Newsletter = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) {
-      toast.error('Please enter your email');
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const response = await axios.post(`${Backendurl || 'http://localhost:4000'}/news/newsdata`, { email });
-      if (response.status === 200) {
-        toast.success('🎉 Successfully subscribed to our newsletter!');
-        setEmail('');
-      } else {
-        toast.error('Failed to subscribe. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error subscribing to newsletter:', error);
-      toast.error('Failed to subscribe. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    // Email regex (simple & effective)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!email) {
+    toast.error('Please enter your email');
+    return;
+  }
+
+  if (!emailRegex.test(email)) {
+    toast.error('Please enter a valid email address');
+    return;
+  }
+
+  // ✅ Success case
+  toast.success('🎉 Successfully subscribed to our App!');
+  setEmail('');
+
+
+
+
+
+
+    // if (!email) {
+    //   toast.error('Please enter your email');
+    //   return;
+    // }
+
+    // setLoading(true);
+    // try {
+    //   const response = await axios.post(`${Backendurl || 'http://localhost:4000'}/news/newsdata`, { email });
+    //   if (response.status === 200) {
+    //     toast.success('🎉 Successfully subscribed to our newsletter!');
+    //     setEmail('');
+    //   } else {
+    //     toast.error('Failed to subscribe. Please try again.');
+    //   }
+    // } catch (error) {
+    //   console.error('Error subscribing to newsletter:', error);
+    //   toast.error('Failed to subscribe. Please try again.');
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   return (

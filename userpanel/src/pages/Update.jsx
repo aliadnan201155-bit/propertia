@@ -1,14 +1,17 @@
-import { useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { backendurl } from '../config/constants';
-import { Upload, X } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 
 const PROPERTY_TYPES = ['House', 'Apartment', 'Office', 'Villa'];
 const AVAILABILITY_TYPES = ['rent', 'buy'];
 const AMENITIES = ['Lake View', 'Fireplace', 'Central heating and air conditioning', 'Dock', 'Pool', 'Garage', 'Garden', 'Gym', 'Security system', 'Master bathroom', 'Guest bathroom', 'Home theater', 'Exercise room/gym', 'Covered parking', 'High-speed internet ready'];
 
-const PropertyForm = () => {
+const Update = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     type: '',
@@ -23,67 +26,90 @@ const PropertyForm = () => {
     amenities: [],
     images: []
   });
-
   const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [newAmenity, setNewAmenity] = useState('');
+
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        const response = await axios.get(`${backendurl}/api/products/single/${id}`);
+        console.log('Response:', response); // Log the response
+        if (response.data.success) {
+          const property = response.data.property;
+          setFormData({
+            title: property.title,
+            type: property.type,
+            price: property.price,
+            location: property.location,
+            description: property.description,
+            beds: property.beds,
+            baths: property.baths,
+            sqft: property.sqft,
+            phone: property.phone,
+            availability: property.availability,
+            amenities: property.amenities,
+            images: property.image
+          });
+          setPreviewUrls(property.image);
+        } else {
+          toast.error(response.data.message);
+        }
+      } catch (error) {
+        console.log('Error fetching property:', error); // Log the error
+        toast.error('An error occurred. Please try again.');
+      }
+    };
+
+    fetchProperty();
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
   };
 
   const handleAmenityToggle = (amenity) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
+        ? prev.amenities.filter((a) => a !== amenity)
         : [...prev.amenities, amenity]
     }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + previewUrls.length > 4) {
-      alert('Maximum 4 images allowed');
-      return;
-    }
-
-    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
-    setFormData(prev => ({
+    setPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, ...files]
+      images: files
     }));
   };
 
   const removeImage = (index) => {
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
-    setFormData(prev => ({
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
   };
 
-  const handleAddAmenity = () => {
-    if (newAmenity && !formData.amenities.includes(newAmenity)) {
-      setFormData(prev => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity]
-      }));
-      setNewAmenity('');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
+      // 🔴 Phone validation
+    if (!formData.phone || formData.phone.length !== 11) {
+      toast.error('Phone number must be exactly 11 digits');
+      return;
+    }
+
     try {
       const formdata = new FormData();
+      formdata.append('id', id);
       formdata.append('title', formData.title);
       formdata.append('type', formData.type);
       formdata.append('price', formData.price);
@@ -100,36 +126,19 @@ const PropertyForm = () => {
       });
 
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${backendurl}/api/products/add`, formdata, {
+      const response = await axios.post(`${backendurl}/api/products/update`, formdata, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         }
       });
-
       if (response.data.success) {
-        toast.success(response.data.message);
-        setFormData({
-          title: '',
-          type: '',
-          price: '',
-          location: '',
-          description: '',
-          beds: '',
-          baths: '',
-          sqft: '',
-          phone: '',
-          availability: '',
-          amenities: [],
-          images: []
-        });
-        setPreviewUrls([]);
-        toast.success('Property added successfully');
+        toast.success('Property updated successfully');
+        navigate('/list');
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.error('Error adding property:', error);
+      console.log(error);
       toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -139,7 +148,7 @@ const PropertyForm = () => {
   return (
     <div className="min-h-screen pt-32 px-4 bg-gray-50">
       <div className="max-w-2xl mx-auto rounded-lg shadow-xl bg-white p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Add New Property</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Update Property</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
@@ -311,7 +320,17 @@ const PropertyForm = () => {
                 name="phone"
                 required
                 value={formData.phone}
-                onChange={handleInputChange}
+                placeholder="03XXXXXXXXX"
+                maxLength={11}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ''); // sirf digits
+                  if (value.length <= 11) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone: value
+                    }));
+                  }
+                }}
                 className="mt-1 block w-full rounded-md border border-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
@@ -394,7 +413,7 @@ const PropertyForm = () => {
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               disabled={loading}
             >
-              {loading ? 'Submitting...' : 'Submit Property'}
+              {loading ? 'Updating...' : 'Update Property'}
             </button>
           </div>
         </form>
@@ -403,4 +422,4 @@ const PropertyForm = () => {
   );
 };
 
-export default PropertyForm;
+export default Update;

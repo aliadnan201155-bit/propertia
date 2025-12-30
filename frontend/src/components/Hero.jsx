@@ -246,7 +246,7 @@ const Hero = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onFocus={() => {
-                          setShowSuggestions(true);
+                          setShowSuggestions(false);
                           setIsSearchFocused(true);
                         }}
                         onBlur={() => setIsSearchFocused(false)}

@@ -149,10 +149,10 @@ const BlogCard = ({ post }) => {
         </motion.div>
 
         {/* View count */}
-        <div className="absolute top-6 right-20 z-10 flex items-center gap-1 px-3 py-1.5 bg-black/30 backdrop-blur-md rounded-full text-white text-xs">
+        {/* <div className="absolute top-6 right-20 z-10 flex items-center gap-1 px-3 py-1.5 bg-black/30 backdrop-blur-md rounded-full text-white text-xs">
           <Eye className="w-3 h-3" />
           {views}
-        </div>
+        </div> */}
         
         <AnimatePresence>
           {isHovered && (
@@ -177,7 +177,7 @@ const BlogCard = ({ post }) => {
         </AnimatePresence>
 
         <div className="absolute top-6 right-6 flex flex-col gap-3">
-          <motion.button
+          {/* <motion.button
             whileTap={pulseAnimation}
             onClick={handleBookmark}
             className={`p-3 backdrop-blur-md rounded-full shadow-lg border border-white/20 transition-all duration-300
@@ -191,15 +191,15 @@ const BlogCard = ({ post }) => {
             ) : (
               <Bookmark className="w-4 h-4" />
             )}
-          </motion.button>
+          </motion.button> */}
           
-          <motion.button
+          {/* <motion.button
             whileTap={pulseAnimation}
             onClick={handleShare}
             className="p-3 bg-white/90 backdrop-blur-md text-gray-700 rounded-full hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 shadow-lg border border-white/20"
           >
             <Share2 className="w-4 h-4" />
-          </motion.button>
+          </motion.button> */}
         </div>
       </div>
 
