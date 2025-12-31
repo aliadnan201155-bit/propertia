@@ -1,37 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { Search, X, MapPin } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from "react";
+import { Search, X, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const SearchBar = ({ onSearch, className }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+const SearchBar = ({ onSearch, className, search }) => {
+  const [searchQuery, setSearchQuery] = useState(search || "");
   const [recentSearches, setRecentSearches] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        clearSearch();
+        setShowSuggestions(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchRef]);
 
   // Popular locations suggestion
   const popularLocations = [
-   'Clifton','Gulberg Town','E-7','Gulshan-e-Iqbal','Bahria Town',
+    "Clifton",
+    "Gulberg Town",
+    "E-7",
+    "Gulshan-e-Iqbal",
+    "Bahria Town",
   ];
 
   useEffect(() => {
     // Load recent searches from localStorage
-    const saved = localStorage.getItem('recentSearches');
+    const saved = localStorage.getItem("recentSearches");
     if (saved) {
       setRecentSearches(JSON.parse(saved));
     }
   }, []);
 
   const handleSearch = (query) => {
-    if (!query.trim()) return;
+    // if (!query.trim()) return;
+    if (!query.trim()) {
+      onSearch(""); 
+      setShowSuggestions(false);
+      return;
+    }
 
     // Update recent searches
     const updatedSearches = [
       query,
-      ...recentSearches.filter(item => item !== query)
+      ...recentSearches.filter((item) => item !== query),
     ].slice(0, 5);
 
     setRecentSearches(updatedSearches);
-    localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
-    
+    localStorage.setItem("recentSearches", JSON.stringify(updatedSearches));
+
     onSearch(query);
     setShowSuggestions(false);
   };
@@ -42,18 +68,18 @@ const SearchBar = ({ onSearch, className }) => {
   };
 
   const clearSearch = () => {
-    setSearchQuery('');
-    onSearch('');
+    setSearchQuery("");
+    onSearch("");
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       setShowSuggestions(false);
     }
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} ref={searchRef}>
       <form onSubmit={handleSubmit} className="relative">
         <input
           type="text"
@@ -66,11 +92,11 @@ const SearchBar = ({ onSearch, className }) => {
             focus:border-blue-500 focus:ring-2 focus:ring-blue-200 
             transition-all text-gray-800 placeholder-gray-400"
         />
-        <Search 
+        <Search
           className="absolute left-4 top-1/2 transform -translate-y-1/2 
-            text-gray-400 h-5 w-5" 
+            text-gray-400 h-5 w-5"
         />
-        
+
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
           {searchQuery && (
             <motion.button
@@ -85,7 +111,7 @@ const SearchBar = ({ onSearch, className }) => {
               <X className="h-4 w-4" />
             </motion.button>
           )}
-          <button 
+          <button
             type="submit"
             className="bg-blue-600 text-white px-4 py-1.5 rounded-lg 
               hover:bg-blue-700 transition-colors flex items-center gap-2"
