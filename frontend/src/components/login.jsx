@@ -248,7 +248,7 @@ const Login = () => {
                       onFocus={() => setEmailFocused(true)}
                       onBlur={() => setEmailFocused(false)}
                       className="w-full px-4 py-4 pl-12 rounded-xl bg-gray-50/80 backdrop-blur-sm border border-gray-200/50 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-300 text-gray-800 placeholder-gray-400"
-                      placeholder="name@company.com"
+                      placeholder="name@example.com"
                       whileFocus={{ scale: 1.02 }}
                     />
                     <motion.div 

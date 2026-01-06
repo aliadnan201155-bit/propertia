@@ -105,7 +105,7 @@ const PropertyCard = ({ property }) => {
         </div>
         
         {/* Favorite button */}
-        <button 
+        {/* <button 
           onClick={toggleFavorite}
           className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-300 
             ${isFavorite 
@@ -113,7 +113,7 @@ const PropertyCard = ({ property }) => {
               : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:text-red-500'}`}
         >
           <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-        </button>
+        </button> */}
         
         {/* View overlay on hover */}
         <AnimatePresence>

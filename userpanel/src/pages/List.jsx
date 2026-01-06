@@ -70,15 +70,23 @@ const PropertyListings = () => {
   };
 
   const parseAmenities = (amenities) => {
-    if (!amenities || !Array.isArray(amenities)) return [];
-    try {
-      return typeof amenities[0] === "string" 
-        ? JSON.parse(amenities[0].replace(/'/g, '"'))
-        : amenities;
-    } catch (error) {
-      console.error("Error parsing amenities:", error);
-      return [];
+    // If amenities is already a non-empty array, return it
+    if (Array.isArray(amenities) && amenities.length > 0) {
+      return amenities;
     }
+    
+    // If it's a string, try to parse it
+    if (typeof amenities === 'string') {
+      try {
+        return JSON.parse(amenities.replace(/'/g, '"'));
+      } catch (error) {
+        console.error("Error parsing amenities:", error);
+        return [];
+      }
+    }
+    
+    // Default to empty array
+    return [];
   };
 
   useEffect(() => {

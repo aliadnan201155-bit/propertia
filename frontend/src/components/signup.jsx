@@ -390,7 +390,7 @@ const Signup = () => {
                         ? 'border-blue-500 focus:border-blue-500 focus:ring-blue-500/20'
                         : 'border-gray-200 hover:border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
                     } focus:ring-4 focus:outline-none`}
-                    placeholder="name@company.com"
+                    placeholder="name@example.com"
                   />
                   {validationErrors.email && (
                     <motion.div

@@ -222,3 +222,9 @@ const getname = async (req, res) => {
 
 
 export { login, register, forgotpassword, resetpassword, adminlogin, logout, getname, verifyToken };
+
+
+
+
+
+

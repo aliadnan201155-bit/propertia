@@ -65,17 +65,23 @@ const PropertyDetails = () => {
   }, [id]);
 
   const parseAmenities = (amenities) => {
-    if (!amenities || !Array.isArray(amenities)) return [];
-    
-    try {
-      if (typeof amenities[0] === "string") {
-        return JSON.parse(amenities[0].replace(/'/g, '"'));
-      }
+    // If amenities is already a non-empty array, return it
+    if (Array.isArray(amenities) && amenities.length > 0) {
       return amenities;
-    } catch (error) {
-      console.error("Error parsing amenities:", error);
-      return [];
     }
+    
+    // If it's a string, try to parse it
+    if (typeof amenities === 'string') {
+      try {
+        return JSON.parse(amenities.replace(/'/g, '"'));
+      } catch (error) {
+        console.error("Error parsing amenities:", error);
+        return [];
+      }
+    }
+    
+    // Default to empty array
+    return [];
   };
 
   const handleKeyNavigation = useCallback((e) => {

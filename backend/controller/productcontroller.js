@@ -4,8 +4,17 @@ import Property from "../models/propertymodel.js";
 
 const addproperty = async (req, res) => {
     try {
-        const { title, location, price, beds, baths, sqft, type, availability, description, amenities,phone } = req.body;
+ let { title, location, price, beds, baths, sqft, type, availability, description, amenities, phone } = req.body;
 
+        // Parse amenities if it's a JSON string (sent from frontend)
+        if (typeof amenities === 'string') {
+            try {
+                amenities = JSON.parse(amenities);
+            } catch (e) {
+                console.error('Error parsing amenities:', e);
+                amenities = [];
+            }
+        }
         const image1 = req.files.image1 && req.files.image1[0];
         const image2 = req.files.image2 && req.files.image2[0];
         const image3 = req.files.image3 && req.files.image3[0];
@@ -80,9 +89,9 @@ const publicListProperty = async (req, res) => {
 const removeproperty = async (req, res) => {
     try {
         // Only allow user to delete their own property
-        const property = await Property.findOneAndDelete({ 
-            _id: req.body.id, 
-            userId: req.user._id 
+        const property = await Property.findOneAndDelete({
+            _id: req.body.id,
+            userId: req.user._id
         });
         if (!property) {
             return res.status(404).json({ message: "Property not found or you don't have permission to delete it", success: false });
@@ -96,7 +105,17 @@ const removeproperty = async (req, res) => {
 
 const updateproperty = async (req, res) => {
     try {
-        const { id, title, location, price, beds, baths, sqft, type, availability, description, amenities,phone } = req.body;
+         let { id, title, location, price, beds, baths, sqft, type, availability, description, amenities, phone } = req.body;
+
+        // Parse amenities if it's a JSON string (sent from frontend)
+        if (typeof amenities === 'string') {
+            try {
+                amenities = JSON.parse(amenities);
+            } catch (e) {
+                console.error('Error parsing amenities:', e);
+                amenities = [];
+            }
+        }
 
         // Only allow user to update their own property
         const property = await Property.findOne({ _id: id, userId: req.user._id });
@@ -130,21 +149,25 @@ const updateproperty = async (req, res) => {
 
         const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
 
-        // Upload images to ImageKit and delete after upload
-        const imageUrls = await Promise.all(
-            images.map(async (item) => {
-                const result = await imagekit.upload({
-                    file: fs.readFileSync(item.path),
-                    fileName: item.originalname,
-                    folder: "Property",
-                });
-                fs.unlink(item.path, (err) => {
-                    if (err) console.log("Error deleting the file: ", err);
-                });
-                return result.url;
-            })
-        );
-
+        // Only upload and update images if new ones were provided
+        if (images.length > 0) {
+            // Upload images to ImageKit and delete after upload
+            const imageUrls = await Promise.all(
+                images.map(async (item) => {
+                    const result = await imagekit.upload({
+                        file: fs.readFileSync(item.path),
+                        fileName: item.originalname,
+                        folder: "Property",
+                    });
+                    fs.unlink(item.path, (err) => {
+                        if (err) console.log("Error deleting the file: ", err);
+                    });
+                    return result.url;
+                })
+            );
+            property.image = imageUrls; // Only update images if new ones uploaded
+        }
+        // If no new images, keep existing images (don't update property.image)
         property.title = title;
         property.location = location;
         property.price = price;
@@ -155,7 +178,6 @@ const updateproperty = async (req, res) => {
         property.availability = availability;
         property.description = description;
         property.amenities = amenities;
-        property.image = imageUrls;
         property.phone = phone;
 
         await property.save();

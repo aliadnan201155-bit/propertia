@@ -36,6 +36,18 @@ const Update = () => {
         console.log('Response:', response); // Log the response
         if (response.data.success) {
           const property = response.data.property;
+
+          // Ensure amenities is an array (parse if it's a string)
+          let amenitiesArray = property.amenities;
+          if (typeof amenitiesArray === 'string') {
+            try {
+              amenitiesArray = JSON.parse(amenitiesArray);
+            } catch (e) {
+              console.error('Error parsing amenities:', e);
+              amenitiesArray = [];
+            }
+          }
+
           setFormData({
             title: property.title,
             type: property.type,
@@ -47,10 +59,10 @@ const Update = () => {
             sqft: property.sqft,
             phone: property.phone,
             availability: property.availability,
-            amenities: property.amenities,
-            images: property.image
+            amenities: amenitiesArray || [],
+            images: property.image || []
           });
-          setPreviewUrls(property.image);
+          setPreviewUrls(property.image || []);
         } else {
           toast.error(response.data.message);
         }
@@ -122,7 +134,9 @@ const Update = () => {
       formdata.append('availability', formData.availability);
       formdata.append('amenities', JSON.stringify(formData.amenities));
       formData.images.forEach((image, index) => {
-        formdata.append(`image${index + 1}`, image);
+         if (image instanceof File) {
+          formdata.append(`image${index + 1}`, image);
+        }
       });
 
       const token = localStorage.getItem('token');
