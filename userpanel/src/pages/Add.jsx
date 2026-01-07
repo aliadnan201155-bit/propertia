@@ -6,7 +6,7 @@ import { Upload, X } from 'lucide-react';
 
 const PROPERTY_TYPES = ['House', 'Apartment', 'Office', 'Villa'];
 const AVAILABILITY_TYPES = ['rent', 'buy'];
-const AMENITIES = ['Lake View', 'Fireplace', 'Central heating and air conditioning', 'Dock', 'Pool', 'Garage', 'Garden', 'Gym', 'Security system', 'Master bathroom', 'Guest bathroom', 'Home theater', 'Exercise room/gym', 'Covered parking', 'High-speed internet ready'];
+const AMENITIES = ['Lake View', 'Fireplace', 'Central heating and air conditioning', 'Dock', 'Pool', 'Garage', 'Garden', 'Gym', 'Security system', 'Master bathroom', 'Guest bathroom', 'Home theater', 'Exercise room/gym', 'Covered parking', 'High-speed internet ready',];
 
 const PropertyForm = () => {
   const [formData, setFormData] = useState({
@@ -85,6 +85,7 @@ const PropertyForm = () => {
       // 🔴 Phone validation
     if (!formData.phone || formData.phone.length !== 11) {
       toast.error('Phone number must be exactly 11 digits');
+      setLoading(false);
       return;
     }
   

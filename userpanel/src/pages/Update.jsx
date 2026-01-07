@@ -116,6 +116,7 @@ const Update = () => {
       // 🔴 Phone validation
     if (!formData.phone || formData.phone.length !== 11) {
       toast.error('Phone number must be exactly 11 digits');
+      setLoading(false);
       return;
     }
 
