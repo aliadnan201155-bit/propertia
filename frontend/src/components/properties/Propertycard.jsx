@@ -60,7 +60,7 @@ const PropertyCard = ({ property, viewType }) => {
       exit={{ opacity: 0, y: 20 }}
       whileHover={{ y: -5 }}
       transition={{ duration: 0.3 }}
-      className={`group bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300
+      className={`cursor-pointer group bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300
         ${isGrid ? 'flex flex-col' : 'flex flex-row gap-6'}`}
       onClick={handleNavigateToDetails}
       onMouseEnter={() => setShowControls(true)}

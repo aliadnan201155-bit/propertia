@@ -11,18 +11,24 @@ const SearchBar = ({ onSearch, className, search }) => {
   useEffect(() => {
     function handleClickOutside(event) {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
-        clearSearch();
         setShowSuggestions(false);
       }
     }
 
+    function handleScroll() {
+      setShowSuggestions(false);
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside);
+    window.addEventListener("scroll", handleScroll);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll);
     };
-  }, [searchRef]);
+  }, []);
 
   // Popular locations suggestion
   const popularLocations = [
