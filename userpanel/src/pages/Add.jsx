@@ -6,7 +6,7 @@ import { Upload, X } from 'lucide-react';
 
 const PROPERTY_TYPES = ['House', 'Apartment', 'Office', 'Villa'];
 const AVAILABILITY_TYPES = ['rent', 'buy'];
-const AMENITIES = ['Lake View', 'Fireplace', 'Central heating and air conditioning', 'Dock', 'Pool', 'Garage', 'Garden', 'Gym', 'Security system', 'Master bathroom', 'Guest bathroom', 'Home theater', 'Exercise room/gym', 'Covered parking', 'High-speed internet ready',];
+const AMENITIES = ['Lake View', 'Fireplace', 'Central heating and air conditioning', 'Dock', 'Pool', 'Garage', 'Garden', 'Gym', 'Security system', 'Master bathroom', 'Guest bathroom', 'Home theater', 'Exercise room/gym', 'Covered parking', 'High-speed internet ready', 'Parking Spaces','Double Glazed Windows','Electricity Backup','Waste Disposal','Furnished','Servant Quarters','Drawing Room','Dining Room','Store Rooms','Broadband Internet Access','Satellite or Cable TV Ready','Intercom','Community Facilities','Community Lawn or Garden','Community Swimming Pool','Community Gym','First Aid or Medical Centre','Day Care Centre','Kids Play Area','Barbeque Area','Mosque','Jacuzzi','Distance From Airport (kms)','Services & Staff','Maintenance Staff','Security Staff','Facilities for Disabled'];
 
 const PropertyForm = () => {
   const [formData, setFormData] = useState({

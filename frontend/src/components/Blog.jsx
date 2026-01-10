@@ -418,7 +418,7 @@ const Blog = () => {
         )}
         
         {/* Enhanced View all articles button */}
-        <motion.div 
+        {/* <motion.div 
           className="text-center mt-20"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -440,7 +440,7 @@ const Blog = () => {
           <p className="text-gray-500 mt-4 text-sm">
             Join thousands of readers staying informed about real estate trends
           </p>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );

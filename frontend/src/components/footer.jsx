@@ -206,7 +206,7 @@ const SocialLinks = () => {
             key={label}
             whileHover={{ scale: 1.15, y: -2 }}
             whileTap={{ scale: 0.95 }}
-            href={href}
+            // href={href}
             title={label}
             target="_blank"
             rel="noopener noreferrer"

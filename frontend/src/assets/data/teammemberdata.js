@@ -1,6 +1,7 @@
 import afnanimage from '../images/afnan.jpg';
 import majeedimage from '../images/majeed.png';
 
+
 export const teamMembers = [
     {
       name: 'Syed Afnan Ali',
@@ -22,5 +23,7 @@ export const teamMembers = [
         linkedin: '#',
         twitter: '#',
       },
+
+      
     }
   ];
