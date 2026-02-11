@@ -17,6 +17,7 @@ import NotFoundPage from "./components/Notfound";
 import { AuthProvider } from "./context/AuthContext";
 import AIPropertyHub from "./pages/Aiagent";
 import StructuredData from "./components/SEO/StructuredData";
+import ChatWidget from "./components/chatbot/ChatWidget";
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -49,6 +50,7 @@ const App = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Footer />
+          <ChatWidget />
           <ToastContainer />
         </Router>
       </AuthProvider>
