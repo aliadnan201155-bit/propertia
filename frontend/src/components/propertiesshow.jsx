@@ -193,6 +193,7 @@ const PropertiesShow = () => {
     { id: 'all', label: 'All Properties' },
     { id: 'apartment', label: 'Apartments' },
     { id: 'villa', label: 'Villas' },
+    { id: 'office', label: 'Offices' },
     { id: 'house', label: 'Houses' }
   ];
   
