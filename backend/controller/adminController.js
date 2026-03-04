@@ -40,8 +40,8 @@ export const getAdminStats = async (req, res) => {
       Property.countDocuments({ userId }),
       Property.countDocuments({ userId }), // Count all properties as active since status field doesn't exist
       Appointment.countDocuments({
-        propertyId: { $in: await Property.find({ userId }).select('_id') },
-        status: "pending"
+        propertyId: { $in: await Property.find({ userId }).select("_id") },
+        status: "pending",
       }),
       getRecentActivity(userId),
       getViewsData(userId),
@@ -51,7 +51,7 @@ export const getAdminStats = async (req, res) => {
     // Calculate total views from user's properties
     const totalViews = await Stats.countDocuments({
       endpoint: /^\/api\/products\/single\//,
-      method: "GET"
+      method: "GET",
     });
 
     res.json({
@@ -83,10 +83,10 @@ const getRecentActivity = async (userId) => {
       .select("title createdAt");
 
     // Get user's property IDs for appointment filtering
-    const userPropertyIds = await Property.find({ userId }).select('_id');
+    const userPropertyIds = await Property.find({ userId }).select("_id");
 
     const recentAppointments = await Appointment.find({
-      propertyId: { $in: userPropertyIds }
+      propertyId: { $in: userPropertyIds },
     })
       .sort({ createdAt: -1 })
       .limit(5)
@@ -95,7 +95,7 @@ const getRecentActivity = async (userId) => {
 
     // Filter out appointments with missing user or property data
     const validAppointments = recentAppointments.filter(
-      (appointment) => appointment.userId && appointment.propertyId
+      (appointment) => appointment.userId && appointment.propertyId,
     );
 
     return [
@@ -192,11 +192,11 @@ const getPropertyTypeData = async (userId) => {
     const data = propertyTypes.map((item) => item.count);
 
     const backgroundColors = [
-      'rgba(59, 130, 246, 0.8)',  // Blue
-      'rgba(16, 185, 129, 0.8)',  // Green
-      'rgba(168, 85, 247, 0.8)',  // Purple
-      'rgba(251, 146, 60, 0.8)',  // Orange
-      'rgba(236, 72, 153, 0.8)',  // Pink
+      "rgba(59, 130, 246, 0.8)", // Blue
+      "rgba(16, 185, 129, 0.8)", // Green
+      "rgba(168, 85, 247, 0.8)", // Purple
+      "rgba(251, 146, 60, 0.8)", // Orange
+      "rgba(236, 72, 153, 0.8)", // Pink
     ];
 
     return {
@@ -206,7 +206,9 @@ const getPropertyTypeData = async (userId) => {
           label: "Properties by Type",
           data,
           backgroundColor: backgroundColors.slice(0, labels.length),
-          borderColor: backgroundColors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
+          borderColor: backgroundColors
+            .slice(0, labels.length)
+            .map((color) => color.replace("0.8", "1")),
           borderWidth: 2,
         },
       ],
@@ -232,21 +234,70 @@ const getPropertyTypeData = async (userId) => {
 export const getAllAppointments = async (req, res) => {
   try {
     const userId = req.user._id;
+    const { myMeetings } = req.query;
+    
+    // Pagination setup
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit, 10) || 10);
+    const skip = (page - 1) * limit;
 
-    // Get user's property IDs
-    const userPropertyIds = await Property.find({ userId }).select('_id');
+    if (myMeetings === 'true') {
+      // Get user's own appointments
+      const [appointments, total] = await Promise.all([
+        Appointment.find({ userId })
+          .populate({
+            path: "propertyId",
+            select: "title location userId",
+            populate: {
+              path: "userId",
+              select: "name email phone"
+            }
+          })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        Appointment.countDocuments({ userId })
+      ]);
 
-    const appointments = await Appointment.find({
-      propertyId: { $in: userPropertyIds }
-    })
-      .populate("propertyId", "title location")
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 });
+      res.json({
+        success: true,
+        appointments,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } else {
+      // Get appointments for user's properties
+      const userPropertyIds = await Property.find({ userId }).select("_id");
 
-    res.json({
-      success: true,
-      appointments,
-    });
+      const [appointments, total] = await Promise.all([
+        Appointment.find({
+          propertyId: { $in: userPropertyIds },
+        })
+          .populate("propertyId", "title location")
+          .populate("userId", "name email")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        Appointment.countDocuments({
+          propertyId: { $in: userPropertyIds },
+        })
+      ]);
+
+      res.json({
+        success: true,
+        appointments,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    }
   } catch (error) {
     console.error("Error fetching appointments:", error);
     res.status(500).json({
@@ -261,7 +312,8 @@ export const updateAppointmentStatus = async (req, res) => {
     const { appointmentId, status } = req.body;
     const userId = req.user._id;
 
-    const appointment = await Appointment.findById(appointmentId).populate("propertyId userId");
+    const appointment =
+      await Appointment.findById(appointmentId).populate("propertyId userId");
 
     if (!appointment) {
       return res.status(404).json({
@@ -271,7 +323,10 @@ export const updateAppointmentStatus = async (req, res) => {
     }
 
     // Verify that the property belongs to the authenticated user
-    const property = await Property.findOne({ _id: appointment.propertyId._id, userId });
+    const property = await Property.findOne({
+      _id: appointment.propertyId._id,
+      userId,
+    });
 
     if (!property) {
       return res.status(403).json({
@@ -288,8 +343,9 @@ export const updateAppointmentStatus = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL,
       to: appointment.userId.email,
-      subject: `Viewing Appointment ${status.charAt(0).toUpperCase() + status.slice(1)
-        } - Propertia`,
+      subject: `Viewing Appointment ${
+        status.charAt(0).toUpperCase() + status.slice(1)
+      } - Propertia`,
       html: getEmailTemplate(appointment, status),
     };
 
@@ -314,7 +370,8 @@ export const updateAppointmentMeetingLink = async (req, res) => {
     const { appointmentId, meetingLink } = req.body;
     const userId = req.user._id;
 
-    const appointment = await Appointment.findById(appointmentId).populate("propertyId userId");
+    const appointment =
+      await Appointment.findById(appointmentId).populate("propertyId userId");
 
     if (!appointment) {
       return res.status(404).json({
@@ -324,7 +381,10 @@ export const updateAppointmentMeetingLink = async (req, res) => {
     }
 
     // Verify that the property belongs to the authenticated user
-    const property = await Property.findOne({ _id: appointment.propertyId._id, userId });
+    const property = await Property.findOne({
+      _id: appointment.propertyId._id,
+      userId,
+    });
 
     if (!property) {
       return res.status(403).json({
@@ -360,7 +420,7 @@ export const updateAppointmentMeetingLink = async (req, res) => {
             </div>
           </div>
         </div>
-      `
+      `,
     };
 
     await transporter.sendMail(mailOptions);

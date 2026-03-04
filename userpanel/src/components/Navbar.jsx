@@ -5,7 +5,6 @@ import {
   Home, 
   List, 
   PlusSquare, 
-  Calendar, 
   Menu, 
   X, 
   LogOut, 
@@ -13,7 +12,9 @@ import {
   Settings,
   Bell,
   User,
-  ChevronDown
+  ChevronDown,
+  CalendarCheck,
+  CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -67,7 +68,8 @@ const Navbar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/list', label: 'Properties', icon: List },
     { path: '/add', label: 'Add Property', icon: PlusSquare },
-    { path: '/appointments', label: 'Appointments', icon: Calendar },
+    { path: '/appointments', label: 'Appointments', icon: CalendarCheck },
+    { path: '/my-meetings', label: 'My Meetings', icon: CalendarDays },
   ];
 
   const containerVariants = {

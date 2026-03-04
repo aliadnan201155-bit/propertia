@@ -23,7 +23,7 @@ router.put("/feedback/:id", submitAppointmentFeedback);
 router.get("/upcoming", getUpcomingAppointments);
 
 // Admin routes
-router.get("/all", getAllAppointments);
+router.get("/all",protect, getAllAppointments);
 router.get("/stats", getAppointmentStats);
 router.put("/status", updateAppointmentStatus);
 router.put("/update-meeting", updateAppointmentMeetingLink);

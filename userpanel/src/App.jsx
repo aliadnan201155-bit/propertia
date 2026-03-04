@@ -25,6 +25,7 @@ import Appointments from "./pages/Appointments";
 
 // Config
 import { APP_CONSTANTS } from "./config/constants";
+import MyMeetings from "./pages/MyMeetings";
 
 // Page transition variants
 const pageVariants = {
@@ -64,6 +65,7 @@ const AppLayout = () => {
               <Route path="/add" element={<Add />} />
               <Route path="/update/:id" element={<Update />} />
               <Route path="/appointments" element={<Appointments />} />
+              <Route path="/my-meetings" element={<MyMeetings />} />
             </Route>
 
             {/* 404 Route */}

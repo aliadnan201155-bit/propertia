@@ -167,14 +167,38 @@ const calculateRevenue = async () => {
 // Appointment management
 export const getAllAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find()
-      .populate('propertyId', 'title location')
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+    // Only admins can fetch all appointments
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to fetch all appointments'
+      });
+    }
+
+    // Pagination
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit, 10) || 10); // Max 50 per page
+    const skip = (page - 1) * limit;
+
+    const [appointments, total] = await Promise.all([
+      Appointment.find()
+        .populate('propertyId', 'title location')
+        .populate('userId', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Appointment.countDocuments()
+    ]);
 
     res.json({
       success: true,
-      appointments
+      appointments,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -188,6 +212,23 @@ export const getAllAppointments = async (req, res) => {
 export const updateAppointmentStatus = async (req, res) => {
   try {
     const { appointmentId, status } = req.body;
+    
+    // Only admins can update appointment status
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update appointment status'
+      });
+    }
+
+    // Validate status is valid enum value
+    const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid appointment status'
+      });
+    }
     
     const appointment = await Appointment.findByIdAndUpdate(
       appointmentId,
@@ -319,6 +360,14 @@ export const cancelAppointment = async (req, res) => {
       });
     }
 
+    // Only allow cancellation of pending or confirmed appointments
+    if (!['pending', 'confirmed'].includes(appointment.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel a ${appointment.status} appointment`
+      });
+    }
+
     appointment.status = 'cancelled';
     appointment.cancelReason = req.body.reason || 'Cancelled by user';
     await appointment.save();
@@ -380,6 +429,14 @@ export const getAppointmentsByUser = async (req, res) => {
 export const updateAppointmentMeetingLink = async (req, res) => {
   try {
     const { appointmentId, meetingLink } = req.body;
+    
+    // Only admins can update meeting link
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update meeting link'
+      });
+    }
     
     const appointment = await Appointment.findByIdAndUpdate(
       appointmentId,
@@ -529,7 +586,10 @@ export const submitAppointmentFeedback = async (req, res) => {
 
 export const getUpcomingAppointments = async (req, res) => {
   try {
+    // Ensure proper date comparison by setting time to start of current day
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
     const appointments = await Appointment.find({
       userId: req.user._id,
       date: { $gte: now },

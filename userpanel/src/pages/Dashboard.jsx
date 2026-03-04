@@ -179,6 +179,8 @@ const Dashboard = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (response.data.success) {
+        console.log(response.data);
+        
         setStats((prev) => ({
           ...prev,
           ...response.data.stats,
