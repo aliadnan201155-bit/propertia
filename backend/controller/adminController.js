@@ -3,7 +3,7 @@ import Property from "../models/propertymodel.js";
 import Appointment from "../models/appointmentModel.js";
 import User from "../models/Usermodel.js";
 import transporter from "../config/nodemailer.js";
-import { getEmailTemplate } from "../email.js";
+import { getEmailTemplate, getMeetingLinkEmailTemplate } from "../email.js";
 
 const formatRecentProperties = (properties) => {
   return properties.map((property) => ({
@@ -405,25 +405,7 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       from: process.env.EMAIL,
       to: appointment.userId.email,
       subject: "Meeting Link Updated - Propertia",
-      html: `
-        <div style="max-width: 600px; margin: 20px auto; font-family: 'Arial', sans-serif; line-height: 1.6;">
-          <div style="background: linear-gradient(135deg, #2563eb, #1e40af); padding: 40px 20px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">Meeting Link Updated</h1>
-          </div>
-          <div style="background: #ffffff; padding: 40px 30px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
-            <p>Your viewing appointment for <strong>${appointment.propertyId.title}</strong> has been updated with a meeting link.</p>
-            <p><strong>Date:</strong> ${new Date(appointment.date).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> ${appointment.time}</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${meetingLink}" 
-                 style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #2563eb, #1e40af); 
-                        color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                Join Meeting
-              </a>
-            </div>
-          </div>
-        </div>
-      `,
+      html: getMeetingLinkEmailTemplate(appointment, meetingLink)
     };
 
     await transporter.sendMail(mailOptions);

@@ -6,6 +6,7 @@ import {
   updateAppointmentStatus,
   getAppointmentsByUser,
   cancelAppointment,
+  rescheduleAppointment,
   updateAppointmentMeetingLink,
   getAppointmentStats,
   submitAppointmentFeedback,
@@ -19,6 +20,7 @@ const router = express.Router();
 router.post("/schedule", protect, scheduleViewing);  // Add protect middleware
 router.get("/user", getAppointmentsByUser);
 router.put("/cancel/:id", cancelAppointment);
+router.put("/reschedule/:id", protect, rescheduleAppointment);
 router.put("/feedback/:id", submitAppointmentFeedback);
 router.get("/upcoming", getUpcomingAppointments);
 

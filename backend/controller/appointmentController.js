@@ -3,7 +3,7 @@ import Property from '../models/propertymodel.js';
 import Appointment from '../models/appointmentModel.js';
 import User from '../models/Usermodel.js';
 import transporter from "../config/nodemailer.js";
-import { getSchedulingEmailTemplate,getEmailTemplate } from '../email.js';
+import { getSchedulingEmailTemplate, getEmailTemplate, getAdminAppointmentNotificationTemplate, getAppointmentRescheduleTemplate, getMeetingLinkEmailTemplate } from '../email.js';
 
 // Format helpers
 const formatRecentProperties = (properties) => {
@@ -277,8 +277,8 @@ export const scheduleViewing = async (req, res) => {
 
     const userId = req.user._id;
 
-    // Check if property exists
-    const property = await Property.findById(propertyId);
+    // Check if property exists and get owner details
+    const property = await Property.findById(propertyId).populate('userId', 'name email');
     if (!property) {
       return res.status(404).json({
         success: false,
@@ -313,15 +313,28 @@ export const scheduleViewing = async (req, res) => {
     await appointment.save();
     await appointment.populate(['propertyId', 'userId']);
 
-    // Send confirmation email
-    const mailOptions = {
+    const userMailOptions = {
       from: process.env.EMAIL,
       to: req.user.email,
       subject: "Viewing Scheduled - Propertia",
       html: getSchedulingEmailTemplate(appointment, date, time, notes)
     };
 
-    await transporter.sendMail(mailOptions);
+    await transporter.sendMail(userMailOptions);
+
+    const adminMailOptions = {
+      from: process.env.EMAIL,
+      to: property.userId.email,
+      subject: "🔔 New Appointment Request - Action Required",
+      html: getAdminAppointmentNotificationTemplate(appointment, req.user)
+    };
+
+    try {
+      await transporter.sendMail(adminMailOptions);
+      console.log('✅ Property owner notification email sent successfully');
+    } catch (emailError) {
+      console.error('❌ Failed to send property owner notification email:', emailError);
+    }
 
     res.status(201).json({
       success: true,
@@ -406,6 +419,134 @@ export const cancelAppointment = async (req, res) => {
   }
 };
 
+// Reschedule appointment
+export const rescheduleAppointment = async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+    const { newDate, newTime, notes } = req.body;
+
+    // Validate required fields
+    if (!newDate || !newTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'New date and time are required'
+      });
+    }
+
+    // Find the appointment
+    const appointment = await Appointment.findById(appointmentId)
+      .populate({
+        path: 'propertyId',
+        select: 'title location userId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
+      .populate('userId', 'email name');
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found'
+      });
+    }
+
+    // Verify user owns this appointment or is admin
+    if (appointment.userId._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to reschedule this appointment'
+      });
+    }
+
+    // Only allow rescheduling of pending or confirmed appointments
+    if (!['pending', 'confirmed'].includes(appointment.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot reschedule a ${appointment.status} appointment`
+      });
+    }
+
+    // Check if the new time slot is available
+    const existingAppointment = await Appointment.findOne({
+      propertyId: appointment.propertyId._id,
+      date: newDate,
+      time: newTime,
+      status: { $ne: 'cancelled' },
+      _id: { $ne: appointmentId } // Exclude current appointment
+    });
+
+    if (existingAppointment) {
+      return res.status(400).json({
+        success: false,
+        message: 'This time slot is already booked'
+      });
+    }
+
+    // Store old date and time for email
+    const oldDate = appointment.date;
+    const oldTime = appointment.time;
+
+    // Update appointment
+    appointment.date = newDate;
+    appointment.time = newTime;
+    if (notes) {
+      appointment.notes = notes;
+    }
+
+    await appointment.save();
+
+    // Send reschedule notification email to user
+    const userMailOptions = {
+      from: process.env.EMAIL,
+      to: appointment.userId.email,
+      subject: '📅 Appointment Rescheduled - Propertia',
+      html: getAppointmentRescheduleTemplate(appointment, oldDate, oldTime, newDate, newTime)
+    };
+
+    await transporter.sendMail(userMailOptions);
+
+    // Send notification to property owner about the reschedule
+    const adminMailOptions = {
+      from: process.env.EMAIL,
+      to: appointment.propertyId.userId.email, // Send to property owner
+      subject: '📅 Appointment Rescheduled - Property Owner Notification',
+      html: `
+        <div style="max-width: 600px; margin: 20px auto; padding: 30px; background: #ffffff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h1 style="color: #f59e0b; text-align: center;">Appointment Rescheduled</h1>
+          <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>Property:</strong> ${appointment.propertyId.title}</p>
+            <p><strong>Customer:</strong> ${appointment.userId.name} (${appointment.userId.email})</p>
+            <p><strong>Old Date:</strong> ${new Date(oldDate).toLocaleDateString()} at ${oldTime}</p>
+            <p><strong>New Date:</strong> ${new Date(newDate).toLocaleDateString()} at ${newTime}</p>
+            ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
+          </div>
+        </div>
+      `
+    };
+
+    try {
+      await transporter.sendMail(adminMailOptions);
+      console.log('✅ Property owner reschedule notification sent successfully');
+    } catch (emailError) {
+      console.error('❌ Failed to send property owner reschedule notification:', emailError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment rescheduled successfully',
+      appointment
+    });
+  } catch (error) {
+    console.error('Error rescheduling appointment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error rescheduling appointment'
+    });
+  }
+};
+
 // Add this function to get user's appointments
 export const getAppointmentsByUser = async (req, res) => {
   try {
@@ -456,25 +597,7 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       from: process.env.EMAIL,
       to: appointment.userId.email,
       subject: "Meeting Link Updated - Propertia",
-      html: `
-        <div style="max-width: 600px; margin: 20px auto; font-family: 'Arial', sans-serif; line-height: 1.6;">
-          <div style="background: linear-gradient(135deg, #2563eb, #1e40af); padding: 40px 20px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">Meeting Link Updated</h1>
-          </div>
-          <div style="background: #ffffff; padding: 40px 30px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
-            <p>Your viewing appointment for <strong>${appointment.propertyId.title}</strong> has been updated with a meeting link.</p>
-            <p><strong>Date:</strong> ${new Date(appointment.date).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> ${appointment.time}</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${meetingLink}" 
-                 style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #2563eb, #1e40af); 
-                        color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                Join Meeting
-              </a>
-            </div>
-          </div>
-        </div>
-      `
+      html: getMeetingLinkEmailTemplate(appointment, meetingLink)
     };
 
     await transporter.sendMail(mailOptions);

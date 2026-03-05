@@ -21,7 +21,6 @@ const MyMeetings = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingMeetingLink, setEditingMeetingLink] = useState(null);
   const [meetingLink, setMeetingLink] = useState("");
 
   const fetchAppointments = async () => {
@@ -49,38 +48,6 @@ const MyMeetings = () => {
     }
   };
 
-
-  const handleMeetingLinkUpdate = async (appointmentId) => {
-    try {
-      if (!meetingLink) {
-        toast.error("Please enter a meeting link");
-        return;
-      }
-
-      const response = await axios.put(
-        `${backendurl}/api/admin/appointments/meeting-link`,
-        {
-          appointmentId,
-          meetingLink,
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-
-      if (response.data.success) {
-        toast.success("Meeting link sent successfully");
-        setEditingMeetingLink(null);
-        setMeetingLink("");
-        fetchAppointments();
-      } else {
-        toast.error(response.data.message);
-      }
-    } catch (error) {
-      console.error("Error updating meeting link:", error);
-      toast.error("Failed to update meeting link");
-    }
-  };
 
   useEffect(() => {
     fetchAppointments();
@@ -252,34 +219,6 @@ const MyMeetings = () => {
 
                     {/* Meeting Link */}
                     <td className="px-6 py-4">
-                      {editingMeetingLink === appointment._id ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="url"
-                            value={meetingLink}
-                            onChange={(e) => setMeetingLink(e.target.value)}
-                            placeholder="Enter meeting link"
-                            className="px-2 py-1 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm w-full"
-                          />
-                          <button
-                            onClick={() =>
-                              handleMeetingLinkUpdate(appointment._id)
-                            }
-                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                          >
-                            <Send className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingMeetingLink(null);
-                              setMeetingLink("");
-                            }}
-                            className="p-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
                         <div className="flex items-center justify-between">
                           {appointment.meetingLink ? (
                             <a
@@ -297,16 +236,14 @@ const MyMeetings = () => {
                           {appointment.status === "confirmed" && (
                             <button
                               onClick={() => {
-                                setEditingMeetingLink(appointment._id);
                                 setMeetingLink(appointment.meetingLink || "");
                               }}
-                              className="ml-2 text-gray-400 hover:text-gray-600"
+                              className="text-gray-400 hover:text-gray-600"
                             >
                               <LinkIcon className="w-4 h-4" />
                             </button>
                           )}
                         </div>
-                      )}
                     </td>
 
 
