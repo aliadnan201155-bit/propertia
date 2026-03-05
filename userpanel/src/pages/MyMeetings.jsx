@@ -6,7 +6,6 @@ import {
   Clock,
   User,
   Home,
-  Check,
   X,
   Loader,
   Filter,
@@ -50,30 +49,6 @@ const MyMeetings = () => {
     }
   };
 
-  const handleStatusChange = async (appointmentId, newStatus) => {
-    try {
-      const response = await axios.put(
-        `${backendurl}/api/admin/appointments/status`,
-        {
-          appointmentId,
-          status: newStatus,
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-
-      if (response.data.success) {
-        toast.success(`Appointment ${newStatus} successfully`);
-        fetchAppointments();
-      } else {
-        toast.error(response.data.message);
-      }
-    } catch (error) {
-      console.error("Error updating appointment:", error);
-      toast.error("Failed to update appointment status");
-    }
-  };
 
   const handleMeetingLinkUpdate = async (appointmentId) => {
     try {
@@ -154,7 +129,7 @@ const MyMeetings = () => {
               My Meetings
             </h1>
             <p className="text-gray-600">
-              Manage and track property viewing meetings
+              View your meetings
             </p>
           </div>
 
@@ -162,7 +137,7 @@ const MyMeetings = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search appointments..."
+                placeholder="Search meetings..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -206,9 +181,7 @@ const MyMeetings = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Meeting Link
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -336,29 +309,7 @@ const MyMeetings = () => {
                       )}
                     </td>
 
-                    {/* Actions */}
-                    <td className="px-6 py-4">
-                      {appointment.status === "pending" && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() =>
-                              handleStatusChange(appointment._id, "confirmed")
-                            }
-                            className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleStatusChange(appointment._id, "cancelled")
-                            }
-                            className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
+
                   </motion.tr>
                 ))}
               </tbody>

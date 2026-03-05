@@ -1,6 +1,20 @@
 import mongoose from 'mongoose';
 
 const statsSchema = new mongoose.Schema({
+  propertyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Property',
+    required: false
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
+  },
+  ipAddress: {
+    type: String,
+    required: false
+  },
   endpoint: {
     type: String,
     required: true
@@ -8,7 +22,7 @@ const statsSchema = new mongoose.Schema({
   method: {
     type: String,
     required: true,
-    enum: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'] // Added HEAD
+    enum: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
   },
   timestamp: {
     type: Date,
@@ -25,6 +39,8 @@ const statsSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Index for better query performance
+statsSchema.index({ propertyId: 1 });
+statsSchema.index({ userId: 1 });
 statsSchema.index({ endpoint: 1, timestamp: -1 });
 statsSchema.index({ method: 1 });
 statsSchema.index({ statusCode: 1 });

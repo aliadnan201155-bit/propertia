@@ -29,6 +29,9 @@ export const getAdminStats = async (req, res) => {
   try {
     const userId = req.user._id;
 
+    // Get user's property IDs once
+    const userPropertyIds = await Property.find({ userId }).select("_id");
+
     const [
       totalProperties,
       activeListings,
@@ -36,23 +39,23 @@ export const getAdminStats = async (req, res) => {
       recentActivity,
       viewsData,
       propertyTypeData,
+      totalViews
     ] = await Promise.all([
       Property.countDocuments({ userId }),
       Property.countDocuments({ userId }), // Count all properties as active since status field doesn't exist
       Appointment.countDocuments({
-        propertyId: { $in: await Property.find({ userId }).select("_id") },
+        propertyId: { $in: userPropertyIds },
         status: "pending",
       }),
       getRecentActivity(userId),
       getViewsData(userId),
       getPropertyTypeData(userId),
+      Stats.countDocuments({
+        propertyId: { $in: userPropertyIds },
+        endpoint: /^\/api\/products\/single\//,
+        method: "GET",
+      })
     ]);
-
-    // Calculate total views from user's properties
-    const totalViews = await Stats.countDocuments({
-      endpoint: /^\/api\/products\/single\//,
-      method: "GET",
-    });
 
     res.json({
       success: true,
@@ -235,13 +238,13 @@ export const getAllAppointments = async (req, res) => {
   try {
     const userId = req.user._id;
     const { myMeetings } = req.query;
-    
+
     // Pagination setup
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(50, parseInt(req.query.limit, 10) || 10);
     const skip = (page - 1) * limit;
 
-    if (myMeetings === 'true') {
+    if (myMeetings === "true") {
       // Get user's own appointments
       const [appointments, total] = await Promise.all([
         Appointment.find({ userId })
@@ -250,13 +253,13 @@ export const getAllAppointments = async (req, res) => {
             select: "title location userId",
             populate: {
               path: "userId",
-              select: "name email phone"
-            }
+              select: "name email phone",
+            },
           })
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
-        Appointment.countDocuments({ userId })
+        Appointment.countDocuments({ userId }),
       ]);
 
       res.json({
@@ -266,8 +269,8 @@ export const getAllAppointments = async (req, res) => {
           total,
           page,
           limit,
-          pages: Math.ceil(total / limit)
-        }
+          pages: Math.ceil(total / limit),
+        },
       });
     } else {
       // Get appointments for user's properties
@@ -284,7 +287,7 @@ export const getAllAppointments = async (req, res) => {
           .limit(limit),
         Appointment.countDocuments({
           propertyId: { $in: userPropertyIds },
-        })
+        }),
       ]);
 
       res.json({
@@ -294,8 +297,8 @@ export const getAllAppointments = async (req, res) => {
           total,
           page,
           limit,
-          pages: Math.ceil(total / limit)
-        }
+          pages: Math.ceil(total / limit),
+        },
       });
     }
   } catch (error) {
