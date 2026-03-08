@@ -128,41 +128,43 @@ const MyMeetings = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-t-purple-500">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gradient-to-r from-purple-50 to-purple-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">
                     Property
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Client
+                  <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">
+                    Owner
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">
                     Date & Time
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">
                     Meeting Link
                   </th>
 
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredAppointments.map((appointment) => (
+              <tbody className="divide-y divide-purple-100">
+                {filteredAppointments.map((appointment, idx) => (
                   <motion.tr
                     key={appointment._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="hover:bg-gray-50"
+                    className={`hover:bg-purple-50 transition-colors ${
+                      idx % 2 === 0 ? "bg-white" : "bg-purple-50/30"
+                    }`}
                   >
                     {/* Property Details */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Home className="w-5 h-5 text-gray-400 mr-2" />
+                        <Home className="w-5 h-5 text-purple-500 mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
                             {appointment.propertyId.title}
@@ -177,7 +179,7 @@ const MyMeetings = () => {
                     {/* Client Details */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <User className="w-5 h-5 text-gray-400 mr-2" />
+                        <User className="w-5 h-5 text-purple-500 mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
                             {appointment.propertyId?.userId?.name || "Unknown"}
@@ -192,13 +194,13 @@ const MyMeetings = () => {
                     {/* Date & Time */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Calendar className="w-5 h-5 text-gray-400 mr-2" />
+                        <Calendar className="w-5 h-5 text-purple-500 mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
                             {new Date(appointment.date).toLocaleDateString()}
                           </p>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Clock className="w-4 h-4 mr-1" />
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="w-4 h-4 mr-1 text-purple-400" />
                             {appointment.time}
                           </div>
                         </div>
@@ -208,7 +210,7 @@ const MyMeetings = () => {
                     {/* Status */}
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${getStatusColor(
                           appointment.status
                         )}`}
                       >
@@ -219,29 +221,19 @@ const MyMeetings = () => {
 
                     {/* Meeting Link */}
                     <td className="px-6 py-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center">
                           {appointment.meetingLink ? (
                             <a
                               href={appointment.meetingLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg transition-colors font-medium text-sm"
                             >
                               <LinkIcon className="w-4 h-4" />
-                              View Link
+                              Join
                             </a>
                           ) : (
-                            <span className="text-gray-500">No link yet</span>
-                          )}
-                          {appointment.status === "confirmed" && (
-                            <button
-                              onClick={() => {
-                                setMeetingLink(appointment.meetingLink || "");
-                              }}
-                              className="text-gray-400 hover:text-gray-600"
-                            >
-                              <LinkIcon className="w-4 h-4" />
-                            </button>
+                            <span className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm">Pending</span>
                           )}
                         </div>
                     </td>
