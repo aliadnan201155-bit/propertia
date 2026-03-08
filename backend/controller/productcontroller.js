@@ -1,205 +1,278 @@
 import fs from "fs";
 import imagekit from "../config/imagekit.js";
 import Property from "../models/propertymodel.js";
+import { Parser } from "@json2csv/plainjs";
 
 const addproperty = async (req, res) => {
-    try {
- let { title, location, price, beds, baths, sqft, type, availability, description, amenities, phone } = req.body;
+  try {
+    let {
+      title,
+      location,
+      price,
+      beds,
+      baths,
+      sqft,
+      type,
+      availability,
+      description,
+      amenities,
+      phone,
+    } = req.body;
 
-        // Parse amenities if it's a JSON string (sent from frontend)
-        if (typeof amenities === 'string') {
-            try {
-                amenities = JSON.parse(amenities);
-            } catch (e) {
-                console.error('Error parsing amenities:', e);
-                amenities = [];
-            }
-        }
-        const image1 = req.files.image1 && req.files.image1[0];
-        const image2 = req.files.image2 && req.files.image2[0];
-        const image3 = req.files.image3 && req.files.image3[0];
-        const image4 = req.files.image4 && req.files.image4[0];
-
-        const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
-
-        // Upload images to ImageKit and delete after upload
-        const imageUrls = await Promise.all(
-            images.map(async (item) => {
-                const result = await imagekit.upload({
-                    file: fs.readFileSync(item.path),
-                    fileName: item.originalname,
-                    folder: "Property",
-                });
-                fs.unlink(item.path, (err) => {
-                    if (err) console.log("Error deleting the file: ", err);
-                });
-                return result.url;
-            })
-        );
-
-        // Create a new product with userId from authenticated user
-        const product = new Property({
-            title,
-            location,
-            price,
-            beds,
-            baths,
-            sqft,
-            type,
-            availability,
-            description,
-            amenities,
-            image: imageUrls,
-            phone,
-            userId: req.user._id
-        });
-
-        // Save the product to the database
-        await product.save();
-
-        res.json({ message: "Product added successfully", success: true });
-    } catch (error) {
-        console.log("Error adding product: ", error);
-        res.status(500).json({ message: "Server Error", success: false });
+    // Parse amenities if it's a JSON string (sent from frontend)
+    if (typeof amenities === "string") {
+      try {
+        amenities = JSON.parse(amenities);
+      } catch (e) {
+        console.error("Error parsing amenities:", e);
+        amenities = [];
+      }
     }
+    const image1 = req.files.image1 && req.files.image1[0];
+    const image2 = req.files.image2 && req.files.image2[0];
+    const image3 = req.files.image3 && req.files.image3[0];
+    const image4 = req.files.image4 && req.files.image4[0];
+
+    const images = [image1, image2, image3, image4].filter(
+      (item) => item !== undefined,
+    );
+
+    // Upload images to ImageKit and delete after upload
+    const imageUrls = await Promise.all(
+      images.map(async (item) => {
+        const result = await imagekit.upload({
+          file: fs.readFileSync(item.path),
+          fileName: item.originalname,
+          folder: "Property",
+        });
+        fs.unlink(item.path, (err) => {
+          if (err) console.log("Error deleting the file: ", err);
+        });
+        return result.url;
+      }),
+    );
+
+    // Create a new product with userId from authenticated user
+    const product = new Property({
+      title,
+      location,
+      price,
+      beds,
+      baths,
+      sqft,
+      type,
+      availability,
+      description,
+      amenities,
+      image: imageUrls,
+      phone,
+      userId: req.user._id,
+    });
+
+    // Save the product to the database
+    await product.save();
+
+    res.json({ message: "Product added successfully", success: true });
+  } catch (error) {
+    console.log("Error adding product: ", error);
+    res.status(500).json({ message: "Server Error", success: false });
+  }
 };
 
 const listproperty = async (req, res) => {
-    try {
-        // Only get properties for the authenticated user (ADMIN PANEL)
-        const property = await Property.find({ userId: req.user._id }).sort({ createdAt: -1 });
-        res.json({ property, success: true });
-    } catch (error) {
-        console.log("Error listing products: ", error);
-        res.status(500).json({ message: "Server Error", success: false });
-    }
+  try {
+    // Only get properties for the authenticated user (ADMIN PANEL)
+    const property = await Property.find({ userId: req.user._id }).sort({
+      createdAt: -1,
+    });
+    res.json({ property, success: true });
+  } catch (error) {
+    console.log("Error listing products: ", error);
+    res.status(500).json({ message: "Server Error", success: false });
+  }
+};
+
+const exportPropertiesCsv = async (req, res) => {
+  try {
+    const property = await Property.find({ userId: req.user._id }).sort({
+      createdAt: -1,
+    });
+    const json2csvParser = new Parser({
+      fields: ['title', 'location', 'price', 'beds', 'baths', 'sqft', 'type', 'availability', 'description', 'amenities', 'phone', 'image', 'createdAt']
+    });
+    const csv = json2csvParser.parse(property);
+
+    res.header("Content-Type", "text/csv");
+    res.attachment("property.csv");
+    return res.send(csv);
+  } catch (error) {
+    console.log("Error exporting properties: ", error);
+    res.status(500).json({ message: "Server Error", success: false });
+  }
 };
 
 const publicListProperty = async (req, res) => {
-    try {
-        // Get ALL properties for public browsing (FRONTEND)
-        const property = await Property.find().sort({ createdAt: -1 });
-        res.json({ property, success: true });
-    } catch (error) {
-        console.log("Error listing products: ", error);
-        res.status(500).json({ message: "Server Error", success: false });
-    }
+  try {
+    // Get ALL properties for public browsing (FRONTEND)
+    const property = await Property.find().sort({ createdAt: -1 });
+    res.json({ property, success: true });
+  } catch (error) {
+    console.log("Error listing products: ", error);
+    res.status(500).json({ message: "Server Error", success: false });
+  }
 };
 
 const removeproperty = async (req, res) => {
-    try {
-        // Only allow user to delete their own property
-        const property = await Property.findOneAndDelete({
-            _id: req.body.id,
-            userId: req.user._id
-        });
-        if (!property) {
-            return res.status(404).json({ message: "Property not found or you don't have permission to delete it", success: false });
-        }
-        return res.json({ message: "Property removed successfully", success: true });
-    } catch (error) {
-        console.log("Error removing product: ", error);
-        return res.status(500).json({ message: "Server Error", success: false });
+  try {
+    // Only allow user to delete their own property
+    const property = await Property.findOneAndDelete({
+      _id: req.body.id,
+      userId: req.user._id,
+    });
+    if (!property) {
+      return res.status(404).json({
+        message: "Property not found or you don't have permission to delete it",
+        success: false,
+      });
     }
+    return res.json({
+      message: "Property removed successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.log("Error removing product: ", error);
+    return res.status(500).json({ message: "Server Error", success: false });
+  }
 };
 
 const updateproperty = async (req, res) => {
-    try {
-         let { id, title, location, price, beds, baths, sqft, type, availability, description, amenities, phone } = req.body;
+  try {
+    let {
+      id,
+      title,
+      location,
+      price,
+      beds,
+      baths,
+      sqft,
+      type,
+      availability,
+      description,
+      amenities,
+      phone,
+    } = req.body;
 
-        // Parse amenities if it's a JSON string (sent from frontend)
-        if (typeof amenities === 'string') {
-            try {
-                amenities = JSON.parse(amenities);
-            } catch (e) {
-                console.error('Error parsing amenities:', e);
-                amenities = [];
-            }
-        }
-
-        // Only allow user to update their own property
-        const property = await Property.findOne({ _id: id, userId: req.user._id });
-        if (!property) {
-            console.log("Property not found with ID:", id); // Debugging line
-            return res.status(404).json({ message: "Property not found or you don't have permission to update it", success: false });
-        }
-
-        if (!req.files) {
-            // No new images provided
-            property.title = title;
-            property.location = location;
-            property.price = price;
-            property.beds = beds;
-            property.baths = baths;
-            property.sqft = sqft;
-            property.type = type;
-            property.availability = availability;
-            property.description = description;
-            property.amenities = amenities;
-            property.phone = phone;
-            // Keep existing images
-            await property.save();
-            return res.json({ message: "Property updated successfully", success: true });
-        }
-
-        const image1 = req.files.image1 && req.files.image1[0];
-        const image2 = req.files.image2 && req.files.image2[0];
-        const image3 = req.files.image3 && req.files.image3[0];
-        const image4 = req.files.image4 && req.files.image4[0];
-
-        const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
-
-        // Only upload and update images if new ones were provided
-        if (images.length > 0) {
-            // Upload images to ImageKit and delete after upload
-            const imageUrls = await Promise.all(
-                images.map(async (item) => {
-                    const result = await imagekit.upload({
-                        file: fs.readFileSync(item.path),
-                        fileName: item.originalname,
-                        folder: "Property",
-                    });
-                    fs.unlink(item.path, (err) => {
-                        if (err) console.log("Error deleting the file: ", err);
-                    });
-                    return result.url;
-                })
-            );
-            property.image = imageUrls; // Only update images if new ones uploaded
-        }
-        // If no new images, keep existing images (don't update property.image)
-        property.title = title;
-        property.location = location;
-        property.price = price;
-        property.beds = beds;
-        property.baths = baths;
-        property.sqft = sqft;
-        property.type = type;
-        property.availability = availability;
-        property.description = description;
-        property.amenities = amenities;
-        property.phone = phone;
-
-        await property.save();
-        res.json({ message: "Property updated successfully", success: true });
-    } catch (error) {
-        console.log("Error updating product: ", error);
-        res.status(500).json({ message: "Server Error", success: false });
+    // Parse amenities if it's a JSON string (sent from frontend)
+    if (typeof amenities === "string") {
+      try {
+        amenities = JSON.parse(amenities);
+      } catch (e) {
+        console.error("Error parsing amenities:", e);
+        amenities = [];
+      }
     }
+
+    // Only allow user to update their own property
+    const property = await Property.findOne({ _id: id, userId: req.user._id });
+    if (!property) {
+      console.log("Property not found with ID:", id); // Debugging line
+      return res.status(404).json({
+        message: "Property not found or you don't have permission to update it",
+        success: false,
+      });
+    }
+
+    if (!req.files) {
+      // No new images provided
+      property.title = title;
+      property.location = location;
+      property.price = price;
+      property.beds = beds;
+      property.baths = baths;
+      property.sqft = sqft;
+      property.type = type;
+      property.availability = availability;
+      property.description = description;
+      property.amenities = amenities;
+      property.phone = phone;
+      // Keep existing images
+      await property.save();
+      return res.json({
+        message: "Property updated successfully",
+        success: true,
+      });
+    }
+
+    const image1 = req.files.image1 && req.files.image1[0];
+    const image2 = req.files.image2 && req.files.image2[0];
+    const image3 = req.files.image3 && req.files.image3[0];
+    const image4 = req.files.image4 && req.files.image4[0];
+
+    const images = [image1, image2, image3, image4].filter(
+      (item) => item !== undefined,
+    );
+
+    // Only upload and update images if new ones were provided
+    if (images.length > 0) {
+      // Upload images to ImageKit and delete after upload
+      const imageUrls = await Promise.all(
+        images.map(async (item) => {
+          const result = await imagekit.upload({
+            file: fs.readFileSync(item.path),
+            fileName: item.originalname,
+            folder: "Property",
+          });
+          fs.unlink(item.path, (err) => {
+            if (err) console.log("Error deleting the file: ", err);
+          });
+          return result.url;
+        }),
+      );
+      property.image = imageUrls; // Only update images if new ones uploaded
+    }
+    // If no new images, keep existing images (don't update property.image)
+    property.title = title;
+    property.location = location;
+    property.price = price;
+    property.beds = beds;
+    property.baths = baths;
+    property.sqft = sqft;
+    property.type = type;
+    property.availability = availability;
+    property.description = description;
+    property.amenities = amenities;
+    property.phone = phone;
+
+    await property.save();
+    res.json({ message: "Property updated successfully", success: true });
+  } catch (error) {
+    console.log("Error updating product: ", error);
+    res.status(500).json({ message: "Server Error", success: false });
+  }
 };
 
 const singleproperty = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const property = await Property.findById(id);
-        if (!property) {
-            return res.status(404).json({ message: "Property not found", success: false });
-        }
-        res.json({ property, success: true });
-    } catch (error) {
-        console.log("Error fetching property:", error);
-        res.status(500).json({ message: "Server Error", success: false });
+  try {
+    const { id } = req.params;
+    const property = await Property.findById(id);
+    if (!property) {
+      return res
+        .status(404)
+        .json({ message: "Property not found", success: false });
     }
+    res.json({ property, success: true });
+  } catch (error) {
+    console.log("Error fetching property:", error);
+    res.status(500).json({ message: "Server Error", success: false });
+  }
 };
 
-export { addproperty, listproperty, publicListProperty, removeproperty, updateproperty , singleproperty};
+export {
+  addproperty,
+  listproperty,
+  publicListProperty,
+  removeproperty,
+  updateproperty,
+  exportPropertiesCsv,
+  singleproperty,
+};

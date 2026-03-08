@@ -4,6 +4,7 @@ import Appointment from "../models/appointmentModel.js";
 import User from "../models/Usermodel.js";
 import transporter from "../config/nodemailer.js";
 import { getEmailTemplate, getMeetingLinkEmailTemplate } from "../email.js";
+import { Parser } from "@json2csv/plainjs";
 
 const formatRecentProperties = (properties) => {
   return properties.map((property) => ({
@@ -233,7 +234,7 @@ const getPropertyTypeData = async (userId) => {
   }
 };
 
-// Add these new controller functions
+// GET Appointments/My meetings in Admin Dashboard 
 export const getAllAppointments = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -306,6 +307,70 @@ export const getAllAppointments = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching appointments",
+    });
+  }
+};
+
+// EXPORT Appointments/My meetings in Admin Dashboard 
+export const exportAllAppointments = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { myMeetings } = req.query;
+
+    let appointments;
+
+    if (myMeetings === "true") {
+      // Get user's own appointments (all records for export)
+      appointments = await Appointment.find({ userId })
+        .populate({
+          path: "propertyId",
+          select: "title location userId",
+          populate: {
+            path: "userId",
+            select: "name email phone",
+          },
+        })
+        .sort({ createdAt: -1 });
+    } else {
+      // Get appointments for user's properties (all records for export)
+      const userPropertyIds = await Property.find({ userId }).select("_id");
+
+      appointments = await Appointment.find({
+        propertyId: { $in: userPropertyIds },
+      })
+        .populate("propertyId", "title location")
+        .populate("userId", "name email")
+        .sort({ createdAt: -1 });
+    }
+
+    // Transform appointments to flatten nested fields for CSV
+    const csvData = appointments.map(appointment => ({
+      propertyTitle: appointment.propertyId?.title || 'N/A',
+      propertyLocation: appointment.propertyId?.location || 'N/A',
+      userName: appointment.userId?.name || 'N/A',
+      userEmail: appointment.userId?.email || 'N/A',
+      date: appointment.date ? new Date(appointment.date).toLocaleDateString() : 'N/A',
+      time: appointment.time || 'N/A',
+      status: appointment.status || 'N/A',
+      meetingLink: appointment.meetingLink || 'N/A',
+      meetingPlatform: appointment.meetingPlatform || 'N/A',
+      notes: appointment.notes || 'N/A',
+      createdAt: appointment.createdAt ? new Date(appointment.createdAt).toLocaleString() : 'N/A',
+    }));
+
+    const json2csvParser = new Parser({
+      fields: ['propertyTitle', 'propertyLocation', 'userName', 'userEmail', 'date', 'time', 'status', 'meetingLink', 'meetingPlatform', 'notes', 'createdAt']
+    });
+    const csv = json2csvParser.parse(csvData);
+
+    res.header("Content-Type", "text/csv");
+    res.attachment(myMeetings === "true" ? "my-appointments.csv" : "property-appointments.csv");
+    return res.send(csv);
+  } catch (error) {
+    console.error("Error exporting appointments:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error exporting appointments",
     });
   }
 };

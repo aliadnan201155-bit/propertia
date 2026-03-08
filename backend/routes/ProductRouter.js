@@ -1,5 +1,5 @@
 import express from 'express';
-import { addproperty, listproperty, publicListProperty, removeproperty, updateproperty, singleproperty } from '../controller/productcontroller.js';
+import { addproperty, listproperty, publicListProperty, removeproperty, updateproperty, singleproperty, exportPropertiesCsv } from '../controller/productcontroller.js';
 import upload from '../middleware/multer.js';
 import { protect } from '../middleware/authmiddleware.js';
 
@@ -17,6 +17,7 @@ propertyrouter.post('/add', protect, upload.fields([
     { name: "image4", maxCount: 1 },
 ]), addproperty);
 propertyrouter.get('/list', protect, listproperty);
+propertyrouter.get('/list/exportCsv', protect, exportPropertiesCsv);
 propertyrouter.post('/remove', protect, removeproperty);
 propertyrouter.post('/update', protect, upload.fields([
     { name: "image1", maxCount: 1 },

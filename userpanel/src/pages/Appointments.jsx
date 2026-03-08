@@ -13,6 +13,7 @@ import {
   Search,
   Link as LinkIcon,
   Send,
+  Download,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { backendurl } from "../config/constants";
@@ -135,6 +136,29 @@ const Appointments = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${backendurl}/api/admin/appointments/exportCsv`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `appointments_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Appointments exported successfully');
+    } catch (error) {
+      console.error('Error exporting appointments:', error);
+      toast.error('Failed to export appointments');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
@@ -182,6 +206,14 @@ const Appointments = () => {
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
+
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </button>
           </div>
         </div>
 

@@ -18,7 +18,8 @@ import {
   TrendingUp,
   Star,
   ChevronDown,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -115,6 +116,29 @@ const PropertyListings = () => {
         console.error("Error removing property:", error);
         toast.error("Failed to remove property");
       }
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${backendurl}/api/products/list/exportCsv`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `properties_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Properties exported successfully');
+    } catch (error) {
+      console.error('Error exporting properties:', error);
+      toast.error('Failed to export properties');
     }
   };
 
@@ -237,6 +261,16 @@ const PropertyListings = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExport}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Export</span>
+              </motion.button>
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
