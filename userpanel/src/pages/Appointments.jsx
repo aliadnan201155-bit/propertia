@@ -217,43 +217,45 @@ const Appointments = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden border-t-4 border-t-blue-500">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gradient-to-r from-blue-50 to-blue-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                     Property
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                     Date & Time
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                     Meeting Link
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredAppointments.map((appointment) => (
+              <tbody className="divide-y divide-blue-100">
+                {filteredAppointments.map((appointment, idx) => (
                   <motion.tr
                     key={appointment._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="hover:bg-gray-50"
+                    className={`hover:bg-blue-50 transition-colors ${
+                      idx % 2 === 0 ? "bg-white" : "bg-blue-50/30"
+                    }`}
                   >
                     {/* Property Details */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Home className="w-5 h-5 text-gray-400 mr-2" />
+                        <Home className="w-5 h-5 text-blue-500 mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
                             {appointment.propertyId.title}
@@ -268,7 +270,7 @@ const Appointments = () => {
                     {/* Client Details */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <User className="w-5 h-5 text-gray-400 mr-2" />
+                        <User className="w-5 h-5 text-blue-500 mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
                             {appointment.userId?.name || "Unknown"}
@@ -283,13 +285,13 @@ const Appointments = () => {
                     {/* Date & Time */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Calendar className="w-5 h-5 text-gray-400 mr-2" />
+                        <Calendar className="w-5 h-5 text-blue-500 mr-3" />
                         <div>
                           <p className="font-medium text-gray-900">
                             {new Date(appointment.date).toLocaleDateString()}
                           </p>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Clock className="w-4 h-4 mr-1" />
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="w-4 h-4 mr-1 text-blue-400" />
                             {appointment.time}
                           </div>
                         </div>
@@ -299,7 +301,7 @@ const Appointments = () => {
                     {/* Status */}
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${getStatusColor(
                           appointment.status
                         )}`}
                       >
@@ -344,13 +346,13 @@ const Appointments = () => {
                               href={appointment.meetingLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors font-medium text-sm"
                             >
                               <LinkIcon className="w-4 h-4" />
-                              View Link
+                              Join
                             </a>
                           ) : (
-                            <span className="text-gray-500">No link yet</span>
+                            <span className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm">Pending</span>
                           )}
                           {appointment.status === "confirmed" && (
                             <button

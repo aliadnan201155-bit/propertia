@@ -98,7 +98,7 @@ const exportPropertiesCsv = async (req, res) => {
       createdAt: -1,
     });
     const json2csvParser = new Parser({
-      fields: ['title', 'location', 'price', 'beds', 'baths', 'sqft', 'type', 'availability', 'description', 'amenities', 'phone', 'image', 'createdAt']
+      fields: ['title', 'location', 'price', 'beds', 'baths', 'sqft', 'type', 'availability', 'description', 'amenities', 'phone', 'createdAt']
     });
     const csv = json2csvParser.parse(property);
 
