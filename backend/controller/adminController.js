@@ -117,12 +117,17 @@ const getViewsData = async (userId) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Get all property IDs owned by the user
+    const userProperties = await Property.find({ userId }).select("_id");
+    const userPropertyIds = userProperties.map((p) => p._id);
+
     const stats = await Stats.aggregate([
       {
         $match: {
           endpoint: /^\/api\/products\/single\//,
           method: "GET",
           timestamp: { $gte: thirtyDaysAgo },
+          propertyId: { $in: userPropertyIds },
         },
       },
       {

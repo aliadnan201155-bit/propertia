@@ -42,7 +42,7 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 const Dashboard = () => {
@@ -59,7 +59,7 @@ const Dashboard = () => {
     error: null,
   });
 
-  const [timeRange, setTimeRange] = useState('30'); // 7, 30, 90 days
+  const [timeRange, setTimeRange] = useState("30"); // 7, 30, 90 days
   const [refreshing, setRefreshing] = useState(false);
 
   // Enhanced chart options with modern styling
@@ -74,20 +74,20 @@ const Dashboard = () => {
           usePointStyle: true,
           font: {
             size: 12,
-            family: "'Inter', sans-serif"
-          }
-        }
+            family: "'Inter', sans-serif",
+          },
+        },
       },
       title: {
         display: false,
       },
       tooltip: {
-        mode: 'index',
+        mode: "index",
         intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        borderColor: "rgba(255, 255, 255, 0.1)",
         borderWidth: 1,
         cornerRadius: 8,
         padding: 12,
@@ -99,51 +99,51 @@ const Dashboard = () => {
         ticks: {
           stepSize: 1,
           precision: 0,
-          color: '#6B7280',
+          color: "#6B7280",
           font: {
-            size: 11
-          }
+            size: 11,
+          },
         },
         grid: {
-          color: 'rgba(107, 114, 128, 0.1)',
+          color: "rgba(107, 114, 128, 0.1)",
           drawBorder: false,
         },
         border: {
-          display: false
-        }
+          display: false,
+        },
       },
       x: {
         grid: {
-          display: false
+          display: false,
         },
         ticks: {
           maxRotation: 0,
-          color: '#6B7280',
+          color: "#6B7280",
           font: {
-            size: 11
-          }
+            size: 11,
+          },
         },
         border: {
-          display: false
-        }
-      }
+          display: false,
+        },
+      },
     },
     interaction: {
       intersect: false,
-      mode: 'index'
+      mode: "index",
     },
     elements: {
       line: {
         tension: 0.4,
-        borderWidth: 3
+        borderWidth: 3,
       },
       point: {
         radius: 0,
         hoverRadius: 6,
         borderWidth: 2,
-        backgroundColor: '#fff'
-      }
-    }
+        backgroundColor: "#fff",
+      },
+    },
   };
 
   // Property type distribution chart options
@@ -152,24 +152,24 @@ const Dashboard = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: "bottom",
         labels: {
           padding: 20,
           usePointStyle: true,
           font: {
-            size: 12
-          }
-        }
+            size: 12,
+          },
+        },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        titleColor: "#fff",
+        bodyColor: "#fff",
         cornerRadius: 8,
         padding: 12,
-      }
+      },
     },
-    cutout: '60%',
+    cutout: "60%",
   };
 
   const fetchStats = async () => {
@@ -180,7 +180,7 @@ const Dashboard = () => {
       });
       if (response.data.success) {
         console.log(response.data);
-        
+
         setStats((prev) => ({
           ...prev,
           ...response.data.stats,
@@ -219,7 +219,7 @@ const Dashboard = () => {
       iconColor: "text-blue-600",
       description: "Total properties listed",
       change: "+12%",
-      changeType: "positive"
+      changeType: "positive",
     },
     {
       title: "Active Listings",
@@ -230,7 +230,7 @@ const Dashboard = () => {
       iconColor: "text-green-600",
       description: "Currently active listings",
       change: "+8%",
-      changeType: "positive"
+      changeType: "positive",
     },
     {
       title: "Total Views",
@@ -241,7 +241,7 @@ const Dashboard = () => {
       iconColor: "text-purple-600",
       description: "Property page views",
       change: "+23%",
-      changeType: "positive"
+      changeType: "positive",
     },
     {
       title: "Pending Appointments",
@@ -252,14 +252,14 @@ const Dashboard = () => {
       iconColor: "text-orange-600",
       description: "Awaiting confirmation",
       change: "-5%",
-      changeType: "negative"
+      changeType: "negative",
     },
   ];
 
   if (stats.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 1, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center bg-white p-8 rounded-2xl shadow-lg"
@@ -268,7 +268,9 @@ const Dashboard = () => {
             <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
             <div className="absolute inset-0 w-12 h-12 border-4 border-blue-100 rounded-full mx-auto"></div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Dashboard</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Loading Dashboard
+          </h3>
           <p className="text-gray-600">Fetching your latest data...</p>
         </motion.div>
       </div>
@@ -278,7 +280,7 @@ const Dashboard = () => {
   if (stats.error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 1, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center bg-white p-8 rounded-2xl shadow-lg max-w-md"
@@ -302,12 +304,14 @@ const Dashboard = () => {
             ) : (
               <TrendingUp className="w-4 h-4" />
             )}
-            {refreshing ? 'Retrying...' : 'Try Again'}
+            {refreshing ? "Retrying..." : "Try Again"}
           </button>
         </motion.div>
       </div>
     );
   }
+
+  console.log(stats);
 
   return (
     <motion.div
@@ -317,7 +321,7 @@ const Dashboard = () => {
     >
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4"
@@ -328,7 +332,8 @@ const Dashboard = () => {
             </h1>
             <p className="text-lg text-gray-600 flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              Welcome back! Here&apos;s what&apos;s happening with your properties
+              Welcome back! Here&apos;s what&apos;s happening with your
+              properties
             </p>
           </div>
 
@@ -358,8 +363,10 @@ const Dashboard = () => {
                 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 
                 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Updating...' : 'Refresh'}
+              <RefreshCw
+                className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              {refreshing ? "Updating..." : "Refresh"}
             </button>
           </div>
         </motion.div>
@@ -377,20 +384,28 @@ const Dashboard = () => {
                 overflow-hidden"
             >
               {/* Background Gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 
-                group-hover:opacity-5 transition-opacity duration-300`}></div>
-              
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 
+                group-hover:opacity-5 transition-opacity duration-300`}
+              ></div>
+
               {/* Content */}
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}>
+                  <div
+                    className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-300`}
+                  >
                     <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
                   </div>
                   <div className="text-right">
-                    <div className={`flex items-center gap-1 text-sm font-medium ${
-                      stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {stat.changeType === 'positive' ? (
+                    <div
+                      className={`flex items-center gap-1 text-sm font-medium ${
+                        stat.changeType === "positive"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {stat.changeType === "positive" ? (
                         <ArrowUpRight className="w-4 h-4" />
                       ) : (
                         <ArrowDownRight className="w-4 h-4" />
@@ -400,9 +415,11 @@ const Dashboard = () => {
                     <span className="text-xs text-gray-500">vs last month</span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-gray-600">{stat.title}</h3>
+                  <h3 className="text-sm font-medium text-gray-600">
+                    {stat.title}
+                  </h3>
                   <p className="text-3xl font-bold text-gray-900 group-hover:text-gray-800">
                     {stat.value.toLocaleString()}
                   </p>
@@ -411,9 +428,11 @@ const Dashboard = () => {
               </div>
 
               {/* Hover Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent 
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent 
                 opacity-0 group-hover:opacity-10 transform -skew-x-12 -translate-x-full 
-                group-hover:translate-x-full transition-all duration-700"></div>
+                group-hover:translate-x-full transition-all duration-700"
+              ></div>
             </motion.div>
           ))}
         </div>
@@ -433,7 +452,9 @@ const Dashboard = () => {
                   <BarChart3 className="w-5 h-5 text-blue-600" />
                   Property Views Analytics
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Track your property engagement over time</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Track your property engagement over time
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -450,8 +471,12 @@ const Dashboard = () => {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <BarChart3 className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 font-medium">No view data available</p>
-                  <p className="text-sm text-gray-400">Data will appear once you have property views</p>
+                  <p className="text-gray-500 font-medium">
+                    No view data available
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Data will appear once you have property views
+                  </p>
                 </div>
               )}
             </div>
@@ -470,19 +495,27 @@ const Dashboard = () => {
                   <PieChart className="w-5 h-5 text-purple-600" />
                   Property Types
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Distribution overview</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Distribution overview
+                </p>
               </div>
             </div>
             <div className="h-[350px]">
-              {stats.propertyTypeData && Object.keys(stats.propertyTypeData).length > 0 ? (
-                <Doughnut data={stats.propertyTypeData} options={doughnutOptions} />
+              {stats.propertyTypeData &&
+              Object.keys(stats.propertyTypeData).length > 0 ? (
+                <Doughnut
+                  data={stats.propertyTypeData}
+                  options={doughnutOptions}
+                />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <PieChart className="w-8 h-8 text-gray-400" />
                   </div>
                   <p className="text-gray-500 font-medium">No property data</p>
-                  <p className="text-sm text-gray-400 text-center">Add properties to see distribution</p>
+                  <p className="text-sm text-gray-400 text-center">
+                    Add properties to see distribution
+                  </p>
                 </div>
               )}
             </div>
@@ -518,8 +551,10 @@ const Dashboard = () => {
                     className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl 
                       transition-colors duration-200 border border-transparent hover:border-gray-100"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
-                      flex items-center justify-center flex-shrink-0">
+                    <div
+                      className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg 
+                      flex items-center justify-center flex-shrink-0"
+                    >
                       <Users className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -538,8 +573,13 @@ const Dashboard = () => {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Activity className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 font-medium">No recent activity</p>
-                  <p className="text-sm text-gray-400">Activity will appear here as users interact with your properties</p>
+                  <p className="text-gray-500 font-medium">
+                    No recent activity
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Activity will appear here as users interact with your
+                    properties
+                  </p>
                 </div>
               )}
             </div>
@@ -562,9 +602,13 @@ const Dashboard = () => {
               {/* Average Views per Property */}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
                 <div>
-                  <p className="text-sm text-gray-600">Avg. Views per Property</p>
+                  <p className="text-sm text-gray-600">
+                    Avg. Views per Property
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalProperties > 0 ? Math.round(stats.totalViews / stats.totalProperties) : 0}
+                    {stats.totalProperties > 0
+                      ? Math.round(stats.totalViews / stats.totalProperties)
+                      : 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -577,7 +621,12 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-gray-600">Active Listing Rate</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalProperties > 0 ? Math.round((stats.activeListings / stats.totalProperties) * 100) : 0}%
+                    {stats.totalProperties > 0
+                      ? Math.round(
+                          (stats.activeListings / stats.totalProperties) * 100,
+                        )
+                      : 0}
+                    %
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -589,7 +638,9 @@ const Dashboard = () => {
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-600">Pending Appointments</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pendingAppointments}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.pendingAppointments}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                   <Calendar className="w-6 h-6 text-orange-600" />
