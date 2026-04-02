@@ -43,7 +43,7 @@ const ChatBot = ({ onClose }) => {
         // Add property results if available
         if (data.results && data.results.length > 0) {
           data.results.forEach((result) => {
-            const propertyText = `${result.option}. ${result.title}\n💰 Rs. ${(result.price / 1000000).toFixed(1)}M\n🛏️ ${result.rooms} Beds | ${result.type}`;
+            const propertyText = `${result.option}. ${result.title}\n💰 Rs. ${(result.price / 1000000).toFixed(1)}M\n🛏️ ${result.beds} Beds | ${result.type}`;
             setMessages((prev) => [...prev, { text: propertyText, isUser: false }]);
           });
         }
