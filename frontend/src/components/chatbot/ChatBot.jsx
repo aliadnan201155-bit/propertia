@@ -18,7 +18,7 @@ const ChatBot = ({ onClose }) => {
 
   useEffect(() => {
     // Welcome message on load
-    const welcomeMessage = "👋 Assalamu Alaikum! I'm RoofrBot, your friendly property assistant. Tell me what you're looking for and I'll help you find the perfect property! 🏠";
+    const welcomeMessage = "👋 Assalamu Alaikum! I'm PropX, your friendly property assistant. Tell me what you're looking for and I'll help you find the perfect property! 🏠";
     setMessages([{ text: welcomeMessage, isUser: false }]);
   }, []);
 
@@ -80,7 +80,7 @@ const ChatBot = ({ onClose }) => {
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-5 py-4 rounded-t-lg flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🤖</span>
-          <h3 className="font-semibold text-lg">RoofrBot</h3>
+          <h3 className="font-semibold text-lg">PropX</h3>
         </div>
         <button
           onClick={onClose}

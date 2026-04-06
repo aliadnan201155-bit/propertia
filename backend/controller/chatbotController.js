@@ -53,7 +53,7 @@ function isGeneralQuestion(text) {
  */
 async function generateSmartResponse(userMessage) {
     try {
-        const prompt = `You are RoofrBot, a friendly Pakistan real estate assistant. 
+        const prompt = `You are PropX, a friendly Pakistan real estate assistant. 
 User asked: "${userMessage}"
 
 Respond in a friendly, helpful way with emojis. Keep it concise (2-3 sentences).
@@ -101,7 +101,7 @@ function generateSmartFallbackResponse(userMessage) {
     }
 
     if (/hi|hello|hey|how are|wassup|kya hal|suno|bhai/.test(lower)) {
-        return `👋 Hello! I'm RoofrBot, your property assistant! 🏠\n\nReady to help you find an amazing property? Tell me what you're looking for! 💚`;
+        return `👋 Hello! I'm PropX, your property assistant! 🏠\n\nReady to help you find an amazing property? Tell me what you're looking for! 💚`;
     }
 
     if (/contact|help|support|phone|email|call|whatsapp/.test(lower)) {
@@ -299,7 +299,7 @@ export const chat = async (req, res) => {
 
             return res.json({
                 success: true,
-                reply: `👋 Assalamu Alaikum! Welcome to RoofrBot! 🏠\n\nI'm your friendly property assistant, here to help you find your perfect home! 💚\n\nTell me what you're looking for:\n🏡 *"3-bedroom house in DHA"*\n🏢 *"Flat under 50 million in Gulberg"*\n🌟 *"2-bed apartment in Bahria Town"*${locationSuggestions}`
+                reply: `👋 Assalamu Alaikum! Welcome to PropX! 🏠\n\nI'm your friendly property assistant, here to help you find your perfect home! 💚\n\nTell me what you're looking for:\n🏡 *"3-bedroom house in DHA"*\n🏢 *"Flat under 50 million in Gulberg"*\n🌟 *"2-bed apartment in Bahria Town"*${locationSuggestions}`
             });
         }
 
