@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 
 
-
-
 // Context
 import { AuthProvider } from "./contexts/AuthContext";
 
