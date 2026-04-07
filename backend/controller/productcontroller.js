@@ -1,7 +1,15 @@
 import fs from "fs";
 import imagekit from "../config/imagekit.js";
 import Property from "../models/propertymodel.js";
+import User from "../models/Usermodel.js";
 import { Parser } from "@json2csv/plainjs";
+
+const parsePagination = (query) => {
+  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 10));
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
+};
 
 const addproperty = async (req, res) => {
   try {
@@ -267,6 +275,181 @@ const singleproperty = async (req, res) => {
   }
 };
 
+// Admin-only CRUD Controllers
+
+const adminListProperties = async (req, res) => {
+  try {
+    const { page, limit, skip } = parsePagination(req.query);
+    const search = (req.query.search || "").trim();
+
+    const filter = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { location: { $regex: search, $options: "i" } },
+            { type: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const [properties, total] = await Promise.all([
+      Property.find(filter)
+        .populate("userId", "name email role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Property.countDocuments(filter),
+    ]);
+
+    return res.json({
+      success: true,
+      properties,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error listing properties:", error);
+    return res.status(500).json({ success: false, message: "Error listing properties" });
+  }
+};
+
+const adminGetPropertyById = async (req, res) => {
+  try {
+    const property = await Property.findById(req.params.id).populate(
+      "userId",
+      "name email role"
+    );
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+    return res.json({ success: true, property });
+  } catch (error) {
+    console.error("Error fetching property:", error);
+    return res.status(500).json({ success: false, message: "Error fetching property" });
+  }
+};
+
+const adminCreateProperty = async (req, res) => {
+  try {
+    const {
+      title,
+      location,
+      price,
+      image,
+      beds,
+      baths,
+      sqft,
+      type,
+      availability,
+      description,
+      amenities,
+      phone,
+      userId,
+    } = req.body;
+
+    if (
+      !title ||
+      !location ||
+      price === undefined ||
+      !Array.isArray(image) ||
+      image.length === 0 ||
+      beds === undefined ||
+      baths === undefined ||
+      sqft === undefined ||
+      !type ||
+      !availability ||
+      !description ||
+      !Array.isArray(amenities) ||
+      !phone ||
+      !userId
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All property fields are required and must be valid",
+      });
+    }
+
+    const owner = await User.findById(userId);
+    if (!owner) {
+      return res.status(404).json({ success: false, message: "Owner user not found" });
+    }
+
+    const property = await Property.create({
+      title,
+      location,
+      price,
+      image,
+      beds,
+      baths,
+      sqft,
+      type,
+      availability,
+      description,
+      amenities,
+      phone,
+      userId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Property created successfully",
+      property,
+    });
+  } catch (error) {
+    console.error("Error creating property:", error);
+    return res.status(500).json({ success: false, message: "Error creating property" });
+  }
+};
+
+const adminUpdateProperty = async (req, res) => {
+  try {
+    const updates = { ...req.body };
+
+    if (updates.userId) {
+      const owner = await User.findById(updates.userId);
+      if (!owner) {
+        return res.status(404).json({ success: false, message: "Owner user not found" });
+      }
+    }
+
+    const property = await Property.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    return res.json({
+      success: true,
+      message: "Property updated successfully",
+      property,
+    });
+  } catch (error) {
+    console.error("Error updating property:", error);
+    return res.status(500).json({ success: false, message: "Error updating property" });
+  }
+};
+
+const adminDeleteProperty = async (req, res) => {
+  try {
+    const property = await Property.findByIdAndDelete(req.params.id);
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    return res.json({ success: true, message: "Property deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting property:", error);
+    return res.status(500).json({ success: false, message: "Error deleting property" });
+  }
+};
+
 export {
   addproperty,
   listproperty,
@@ -275,4 +458,9 @@ export {
   updateproperty,
   exportPropertiesCsv,
   singleproperty,
+  adminListProperties,
+  adminGetPropertyById,
+  adminCreateProperty,
+  adminUpdateProperty,
+  adminDeleteProperty,
 };

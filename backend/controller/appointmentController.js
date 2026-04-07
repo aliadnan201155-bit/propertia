@@ -5,6 +5,13 @@ import User from '../models/Usermodel.js';
 import transporter from "../config/nodemailer.js";
 import { getSchedulingEmailTemplate, getEmailTemplate, getAdminAppointmentNotificationTemplate, getAppointmentRescheduleTemplate, getMeetingLinkEmailTemplate } from '../email.js';
 
+const parsePagination = (query) => {
+  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 10));
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
+};
+
 // Format helpers
 const formatRecentProperties = (properties) => {
   return properties.map(property => ({
@@ -732,5 +739,163 @@ export const getUpcomingAppointments = async (req, res) => {
       success: false,
       message: 'Error fetching upcoming appointments'
     });
+  }
+};
+
+// Admin-only CRUD Controllers
+
+export const adminListAppointments = async (req, res) => {
+  try {
+    const { page, limit, skip } = parsePagination(req.query);
+    const status = (req.query.status || '').trim();
+
+    const filter = status ? { status } : {};
+
+    const [appointments, total] = await Promise.all([
+      Appointment.find(filter)
+        .populate('propertyId', 'title location')
+        .populate('userId', 'name email role')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Appointment.countDocuments(filter),
+    ]);
+
+    return res.json({
+      success: true,
+      appointments,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Error listing appointments:', error);
+    return res.status(500).json({ success: false, message: 'Error listing appointments' });
+  }
+};
+
+export const adminGetAppointmentById = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id)
+      .populate('propertyId', 'title location')
+      .populate('userId', 'name email role');
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    return res.json({ success: true, appointment });
+  } catch (error) {
+    console.error('Error fetching appointment:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching appointment' });
+  }
+};
+
+export const adminCreateAppointment = async (req, res) => {
+  try {
+    const {
+      propertyId,
+      userId,
+      date,
+      time,
+      status = 'pending',
+      meetingLink,
+      meetingPlatform,
+      notes,
+    } = req.body;
+
+    if (!propertyId || !userId || !date || !time) {
+      return res.status(400).json({
+        success: false,
+        message: 'propertyId, userId, date and time are required',
+      });
+    }
+
+    const [property, user] = await Promise.all([
+      Property.findById(propertyId),
+      User.findById(userId),
+    ]);
+
+    if (!property) {
+      return res.status(404).json({ success: false, message: 'Property not found' });
+    }
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const appointment = await Appointment.create({
+      propertyId,
+      userId,
+      date,
+      time,
+      status,
+      meetingLink,
+      meetingPlatform,
+      notes,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Appointment created successfully',
+      appointment,
+    });
+  } catch (error) {
+    console.error('Error creating appointment:', error);
+    return res.status(500).json({ success: false, message: 'Error creating appointment' });
+  }
+};
+
+export const adminUpdateAppointment = async (req, res) => {
+  try {
+    const updates = { ...req.body };
+
+    if (updates.propertyId) {
+      const property = await Property.findById(updates.propertyId);
+      if (!property) {
+        return res.status(404).json({ success: false, message: 'Property not found' });
+      }
+    }
+
+    if (updates.userId) {
+      const user = await User.findById(updates.userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+    }
+
+    const appointment = await Appointment.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Appointment updated successfully',
+      appointment,
+    });
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    return res.status(500).json({ success: false, message: 'Error updating appointment' });
+  }
+};
+
+export const adminDeleteAppointment = async (req, res) => {
+  try {
+    const appointment = await Appointment.findByIdAndDelete(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    return res.json({ success: true, message: 'Appointment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    return res.status(500).json({ success: false, message: 'Error deleting appointment' });
   }
 };

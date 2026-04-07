@@ -1,7 +1,20 @@
 import express from 'express';
-import { addproperty, listproperty, publicListProperty, removeproperty, updateproperty, singleproperty, exportPropertiesCsv } from '../controller/productcontroller.js';
+import {
+    addproperty,
+    listproperty,
+    publicListProperty,
+    removeproperty,
+    updateproperty,
+    singleproperty,
+    exportPropertiesCsv,
+    adminListProperties,
+    adminGetPropertyById,
+    adminCreateProperty,
+    adminUpdateProperty,
+    adminDeleteProperty,
+} from '../controller/productcontroller.js';
 import upload from '../middleware/multer.js';
-import { protect } from '../middleware/authmiddleware.js';
+import { protect, requireAdmin } from '../middleware/authmiddleware.js';
 
 const propertyrouter = express.Router();
 
@@ -25,5 +38,12 @@ propertyrouter.post('/update', protect, upload.fields([
     { name: "image3", maxCount: 1 },
     { name: "image4", maxCount: 1 },
 ]), updateproperty);
+
+// Admin-only CRUD routes
+propertyrouter.get('/manage', protect, requireAdmin, adminListProperties);
+propertyrouter.get('/manage/:id', protect, requireAdmin, adminGetPropertyById);
+propertyrouter.post('/manage', protect, requireAdmin, adminCreateProperty);
+propertyrouter.put('/manage/:id', protect, requireAdmin, adminUpdateProperty);
+propertyrouter.delete('/manage/:id', protect, requireAdmin, adminDeleteProperty);
 
 export default propertyrouter;

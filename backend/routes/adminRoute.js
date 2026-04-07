@@ -4,7 +4,7 @@ import {
   getAllAppointments,
   updateAppointmentStatus,
   updateAppointmentMeetingLink,
-  exportAllAppointments
+  exportAllAppointments,
 } from '../controller/adminController.js';
 import { protect } from '../middleware/authmiddleware.js';
 

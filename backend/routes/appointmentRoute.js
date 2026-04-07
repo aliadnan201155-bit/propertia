@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from '../middleware/authmiddleware.js';
+import { protect, requireAdmin } from '../middleware/authmiddleware.js';
 import {
   scheduleViewing,
   getAllAppointments,
@@ -10,7 +10,12 @@ import {
   updateAppointmentMeetingLink,
   getAppointmentStats,
   submitAppointmentFeedback,
-  getUpcomingAppointments
+  getUpcomingAppointments,
+  adminListAppointments,
+  adminGetAppointmentById,
+  adminCreateAppointment,
+  adminUpdateAppointment,
+  adminDeleteAppointment,
 } from "../controller/appointmentController.js";
 
 
@@ -29,5 +34,12 @@ router.get("/all",protect, getAllAppointments);
 router.get("/stats", getAppointmentStats);
 router.put("/status", updateAppointmentStatus);
 router.put("/update-meeting", updateAppointmentMeetingLink);
+
+// Admin-only CRUD routes
+router.get('/manage', protect, requireAdmin, adminListAppointments);
+router.get('/manage/:id', protect, requireAdmin, adminGetAppointmentById);
+router.post('/manage', protect, requireAdmin, adminCreateAppointment);
+router.put('/manage/:id', protect, requireAdmin, adminUpdateAppointment);
+router.delete('/manage/:id', protect, requireAdmin, adminDeleteAppointment);
 
 export default router;

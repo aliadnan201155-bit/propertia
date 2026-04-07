@@ -1,7 +1,6 @@
 import Stats from "../models/statsModel.js";
 import Property from "../models/propertymodel.js";
 import Appointment from "../models/appointmentModel.js";
-import User from "../models/Usermodel.js";
 import transporter from "../config/nodemailer.js";
 import { getEmailTemplate, getMeetingLinkEmailTemplate } from "../email.js";
 import { Parser } from "@json2csv/plainjs";
