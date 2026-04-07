@@ -14,11 +14,11 @@ const ChatWidget = () => {
       {!isOpen && (
         <button
           onClick={toggleChat}
-          className="fixed bottom-6 right-6 bg-primary-600 text-white rounded-full p-4 shadow-lg hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 hover:scale-110 z-50 group"
+          className="fixed bottom-6 right-6 bg-primary-600 text-white rounded-full p-7 shadow-xl hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 transition-all duration-300 hover:scale-110 z-50 group"
           aria-label="Open chat"
         >
           <svg
-            className="w-6 h-6"
+            className="w-10 h-10"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
