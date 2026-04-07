@@ -1,6 +1,7 @@
 import Stats from "../models/statsModel.js";
 import Property from "../models/propertymodel.js";
 import Appointment from "../models/appointmentModel.js";
+import User from "../models/Usermodel.js";
 import transporter from "../config/nodemailer.js";
 import { getEmailTemplate, getMeetingLinkEmailTemplate } from "../email.js";
 import { Parser } from "@json2csv/plainjs";
@@ -25,7 +26,7 @@ const formatRecentAppointments = (appointments) => {
 };
 
 // Add these helper functions before the existing exports
-export const getAdminStats = async (req, res) => {
+export const getOwnerStats = async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -489,6 +490,152 @@ export const updateAppointmentMeetingLink = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error updating meeting link",
+    });
+  }
+};
+
+export const getAdminOverviewStats = async (req, res) => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [
+      totalUsers,
+      totalAdmins,
+      totalProperties,
+      totalAppointments,
+      pendingAppointments,
+      confirmedAppointments,
+      completedAppointments,
+      cancelledAppointments,
+      totalViews,
+      recentProperties,
+      recentAppointments,
+      appointmentTrends,
+      viewTrends,
+      ownerUserIds,
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: "admin" }),
+      Property.countDocuments(),
+      Appointment.countDocuments(),
+      Appointment.countDocuments({ status: "pending" }),
+      Appointment.countDocuments({ status: "confirmed" }),
+      Appointment.countDocuments({ status: "completed" }),
+      Appointment.countDocuments({ status: "cancelled" }),
+      Stats.countDocuments({
+        endpoint: /^\/api\/products\/single\//,
+        method: "GET",
+      }),
+      Property.find().sort({ createdAt: -1 }).limit(5).select("title createdAt"),
+      Appointment.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("propertyId", "title")
+        .populate("userId", "name"),
+      Appointment.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: thirtyDaysAgo },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Stats.aggregate([
+        {
+          $match: {
+            endpoint: /^\/api\/products\/single\//,
+            method: "GET",
+            timestamp: { $gte: thirtyDaysAgo },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$timestamp" },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Property.distinct("userId"),
+    ]);
+
+    const labels = [];
+    const appointmentsData = [];
+    const viewsData = [];
+
+    for (let i = 30; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateString = date.toISOString().split("T")[0];
+      labels.push(dateString);
+
+      const appointmentStat = appointmentTrends.find((s) => s._id === dateString);
+      appointmentsData.push(appointmentStat ? appointmentStat.count : 0);
+
+      const viewStat = viewTrends.find((s) => s._id === dateString);
+      viewsData.push(viewStat ? viewStat.count : 0);
+    }
+
+    const validRecentAppointments = recentAppointments.filter(
+      (appointment) => appointment.userId && appointment.propertyId
+    );
+
+    return res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalAdmins,
+        totalOwners: ownerUserIds.length,
+        totalProperties,
+        totalAppointments,
+        pendingAppointments,
+        confirmedAppointments,
+        completedAppointments,
+        cancelledAppointments,
+        totalViews,
+        recentActivity: [
+          ...formatRecentProperties(recentProperties),
+          ...formatRecentAppointments(validRecentAppointments),
+        ].sort((a, b) => b.timestamp - a.timestamp),
+        chartData: {
+          labels,
+          datasets: [
+            {
+              label: "Appointments",
+              data: appointmentsData,
+              borderColor: "rgb(59, 130, 246)",
+              backgroundColor: "rgba(59, 130, 246, 0.2)",
+              tension: 0.4,
+              fill: true,
+            },
+            {
+              label: "Property Views",
+              data: viewsData,
+              borderColor: "rgb(16, 185, 129)",
+              backgroundColor: "rgba(16, 185, 129, 0.2)",
+              tension: 0.4,
+              fill: true,
+            },
+          ],
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching admin overview stats:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching admin overview statistics",
     });
   }
 };

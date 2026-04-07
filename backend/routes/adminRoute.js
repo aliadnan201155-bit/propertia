@@ -1,16 +1,18 @@
 import express from 'express';
 import { 
-  getAdminStats,
+  getOwnerStats,
+  getAdminOverviewStats,
   getAllAppointments,
   updateAppointmentStatus,
   updateAppointmentMeetingLink,
   exportAllAppointments,
 } from '../controller/adminController.js';
-import { protect } from '../middleware/authmiddleware.js';
+import { protect, requireAdmin } from '../middleware/authmiddleware.js';
 
 const router = express.Router();
 
-router.get('/stats', protect, getAdminStats);
+router.get('/stats', protect, getOwnerStats);
+router.get('/overview', protect, requireAdmin, getAdminOverviewStats);
 router.get('/appointments', protect, getAllAppointments);
 router.get('/appointments/exportCsv', protect, exportAllAppointments);
 router.put('/appointments/status', protect, updateAppointmentStatus);
