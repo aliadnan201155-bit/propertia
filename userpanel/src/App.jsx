@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Context
 import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./hooks/useAuth";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -20,6 +21,9 @@ import PropertyListings from "./pages/List";
 import Add from "./pages/Add";
 import Update from "./pages/Update";
 import Appointments from "./pages/Appointments";
+import UsersManagement from "./pages/Users";
+import AdminProperties from "./pages/AdminProperties";
+import AdminAppointments from "./pages/AdminAppointments";
 
 // Config
 import { APP_CONSTANTS } from "./config/constants";
@@ -36,6 +40,8 @@ const pageVariants = {
 const AppLayout = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,11 +65,32 @@ const AppLayout = () => {
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/list" element={<PropertyListings />} />
+              <Route
+                path="/list"
+                element={isAdmin ? <Navigate to="/admin/properties" replace /> : <PropertyListings />}
+              />
               <Route path="/add" element={<Add />} />
               <Route path="/update/:id" element={<Update />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/my-meetings" element={<MyMeetings />} />
+              <Route
+                path="/appointments"
+                element={isAdmin ? <Navigate to="/admin/appointments" replace /> : <Appointments />}
+              />
+              <Route
+                path="/my-meetings"
+                element={isAdmin ? <Navigate to="/dashboard" replace /> : <MyMeetings />}
+              />
+              <Route
+                path="/users"
+                element={isAdmin ? <UsersManagement /> : <Navigate to="/dashboard" replace />}
+              />
+              <Route
+                path="/admin/properties"
+                element={isAdmin ? <AdminProperties /> : <Navigate to="/dashboard" replace />}
+              />
+              <Route
+                path="/admin/appointments"
+                element={isAdmin ? <AdminAppointments /> : <Navigate to="/dashboard" replace />}
+              />
             </Route>
 
             {/* 404 Route */}

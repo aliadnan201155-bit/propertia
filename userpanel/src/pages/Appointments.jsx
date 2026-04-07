@@ -17,8 +17,12 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { backendurl } from "../config/constants";
+import { useAuth } from "../hooks/useAuth";
 
-const Appointments = () => {
+const Appointments = ({ adminMode = false }) => {
+  const { user } = useAuth();
+  const isAdmin = adminMode || user?.role === "admin";
+
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -29,7 +33,10 @@ const Appointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${backendurl}/api/admin/appointments`, {
+      const endpoint = isAdmin
+        ? `${backendurl}/api/appointments/manage`
+        : `${backendurl}/api/admin/appointments`;
+      const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
@@ -52,16 +59,28 @@ const Appointments = () => {
 
   const handleStatusChange = async (appointmentId, newStatus) => {
     try {
-      const response = await axios.put(
-        `${backendurl}/api/admin/appointments/status`,
-        {
-          appointmentId,
-          status: newStatus,
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+      const response = isAdmin
+        ? await axios.put(
+            `${backendurl}/api/appointments/manage/${appointmentId}`,
+            { status: newStatus },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          )
+        : await axios.put(
+            `${backendurl}/api/admin/appointments/status`,
+            {
+              appointmentId,
+              status: newStatus,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
 
       if (response.data.success) {
         toast.success(`Appointment ${newStatus} successfully`);
@@ -83,11 +102,15 @@ const Appointments = () => {
       }
 
       const response = await axios.put(
-        `${backendurl}/api/admin/appointments/meeting-link`,
-        {
-          appointmentId,
-          meetingLink,
-        },
+        isAdmin
+          ? `${backendurl}/api/appointments/manage/${appointmentId}`
+          : `${backendurl}/api/admin/appointments/meeting-link`,
+        isAdmin
+          ? { meetingLink }
+          : {
+              appointmentId,
+              meetingLink,
+            },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -109,7 +132,7 @@ const Appointments = () => {
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [isAdmin]);
 
   const filteredAppointments = appointments.filter((apt) => {
     const matchesSearch =
@@ -138,6 +161,34 @@ const Appointments = () => {
 
   const handleExport = async () => {
     try {
+      if (isAdmin) {
+        const rows = appointments.map((apt) => ({
+          propertyTitle: apt.propertyId?.title || "N/A",
+          propertyLocation: apt.propertyId?.location || "N/A",
+          userName: apt.userId?.name || "N/A",
+          userEmail: apt.userId?.email || "N/A",
+          date: apt.date ? new Date(apt.date).toLocaleDateString() : "N/A",
+          time: apt.time || "N/A",
+          status: apt.status || "N/A",
+          meetingLink: apt.meetingLink || "N/A",
+        }));
+
+        const headers = Object.keys(rows[0] || {});
+        const csv = [headers.join(','), ...rows.map((row) => headers.map((h) => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `all_appointments_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('Appointments exported successfully');
+        return;
+      }
+
       const token = localStorage.getItem('token');
       const response = await axios.get(`${backendurl}/api/admin/appointments/exportCsv`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -174,10 +225,12 @@ const Appointments = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              Appointments
+              {isAdmin ? "Admin Appointments Management" : "Appointments"}
             </h1>
             <p className="text-gray-600">
-              Manage and track property viewing appointments
+              {isAdmin
+                ? "Manage and track appointments across the platform"
+                : "Manage and track property viewing appointments"}
             </p>
           </div>
 

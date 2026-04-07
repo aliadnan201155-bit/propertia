@@ -26,8 +26,12 @@ import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { backendurl } from "../config/constants";
+import { useAuth } from "../hooks/useAuth";
 
-const PropertyListings = () => {
+const PropertyListings = ({ adminMode = false }) => {
+  const { user } = useAuth();
+  const isAdmin = adminMode || user?.role === "admin";
+
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,13 +45,15 @@ const PropertyListings = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${backendurl}/api/products/list`, {
+      const endpoint = isAdmin ? `${backendurl}/api/products/manage` : `${backendurl}/api/products/list`;
+      const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       if (response.data.success) {
-        const parsedProperties = response.data.property.map(property => ({
+        const source = isAdmin ? response.data.properties : response.data.property;
+        const parsedProperties = (source || []).map(property => ({
           ...property,
           amenities: parseAmenities(property.amenities)
         }));
@@ -92,19 +98,27 @@ const PropertyListings = () => {
 
   useEffect(() => {
     fetchProperties();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRemoveProperty = async (propertyId, propertyTitle) => {
     if (window.confirm(`Are you sure you want to remove "${propertyTitle}"?`)) {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.post(`${backendurl}/api/products/remove`, {
-          id: propertyId
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = isAdmin
+          ? await axios.delete(`${backendurl}/api/products/manage/${propertyId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+          : await axios.post(
+              `${backendurl}/api/products/remove`,
+              { id: propertyId },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
 
         if (response.data.success) {
           toast.success("Property removed successfully");
@@ -121,6 +135,35 @@ const PropertyListings = () => {
 
   const handleExport = async () => {
     try {
+      if (isAdmin) {
+        const rows = properties.map((property) => ({
+          title: property.title,
+          location: property.location,
+          price: property.price,
+          beds: property.beds,
+          baths: property.baths,
+          sqft: property.sqft,
+          type: property.type,
+          availability: property.availability,
+          phone: property.phone,
+        }));
+
+        const headers = Object.keys(rows[0] || {});
+        const csv = [headers.join(','), ...rows.map((row) => headers.map((h) => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `all_properties_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('Properties exported successfully');
+        return;
+      }
+
       const token = localStorage.getItem('token');
       const response = await axios.get(`${backendurl}/api/products/list/exportCsv`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -246,7 +289,7 @@ const PropertyListings = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div className="space-y-2">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent pb-4">
-                Property Management
+                {isAdmin ? "Admin Property Management" : "Property Management"}
               </h1>
               <div className="flex items-center gap-4 text-sm text-gray-600 ">
                 <div className="flex items-center gap-2">

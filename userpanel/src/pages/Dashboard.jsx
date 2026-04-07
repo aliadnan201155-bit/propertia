@@ -31,6 +31,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { backendurl } from "../config/constants";
+import { useAuth } from "../hooks/useAuth";
 
 // Register ChartJS components
 ChartJS.register(
@@ -46,20 +47,30 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalAdmins: 0,
+    totalOwners: 0,
     totalProperties: 0,
+    totalAppointments: 0,
     activeListings: 0,
     totalViews: 0,
     pendingAppointments: 0,
+    confirmedAppointments: 0,
+    completedAppointments: 0,
+    cancelledAppointments: 0,
     recentActivity: [],
     viewsData: {},
+    chartData: {},
     propertyTypeData: {},
     monthlyStats: {},
     loading: true,
     error: null,
   });
 
-  const [timeRange, setTimeRange] = useState("30"); // 7, 30, 90 days
   const [refreshing, setRefreshing] = useState(false);
 
   // Enhanced chart options with modern styling
@@ -175,12 +186,11 @@ const Dashboard = () => {
   const fetchStats = async () => {
     try {
       setRefreshing(true);
-      const response = await axios.get(`${backendurl}/api/admin/stats`, {
+      const endpoint = isAdmin ? "/api/admin/overview" : "/api/admin/stats";
+      const response = await axios.get(`${backendurl}${endpoint}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (response.data.success) {
-        console.log(response.data);
-
         setStats((prev) => ({
           ...prev,
           ...response.data.stats,
@@ -207,54 +217,129 @@ const Dashboard = () => {
     // Refresh data every 5 minutes
     const interval = setInterval(fetchStats, 300000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAdmin]);
 
-  const statCards = [
-    {
-      title: "Total Properties",
-      value: stats.totalProperties,
-      icon: Home,
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600",
-      description: "Total properties listed",
-      change: "+12%",
-      changeType: "positive",
-    },
-    {
-      title: "Active Listings",
-      value: stats.activeListings,
-      icon: Activity,
-      color: "from-green-500 to-green-600",
-      bgColor: "bg-green-50",
-      iconColor: "text-green-600",
-      description: "Currently active listings",
-      change: "+8%",
-      changeType: "positive",
-    },
-    {
-      title: "Total Views",
-      value: stats.totalViews,
-      icon: Eye,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      iconColor: "text-purple-600",
-      description: "Property page views",
-      change: "+23%",
-      changeType: "positive",
-    },
-    {
-      title: "Pending Appointments",
-      value: stats.pendingAppointments,
-      icon: Calendar,
-      color: "from-orange-500 to-orange-600",
-      bgColor: "bg-orange-50",
-      iconColor: "text-orange-600",
-      description: "Awaiting confirmation",
-      change: "-5%",
-      changeType: "negative",
-    },
-  ];
+  const adminStatusDistribution = {
+    labels: ["Pending", "Confirmed", "Completed", "Cancelled"],
+    datasets: [
+      {
+        label: "Appointments by Status",
+        data: [
+          stats.pendingAppointments || 0,
+          stats.confirmedAppointments || 0,
+          stats.completedAppointments || 0,
+          stats.cancelledAppointments || 0,
+        ],
+        backgroundColor: [
+          "rgba(251, 191, 36, 0.8)",
+          "rgba(59, 130, 246, 0.8)",
+          "rgba(16, 185, 129, 0.8)",
+          "rgba(239, 68, 68, 0.8)",
+        ],
+        borderColor: [
+          "rgba(251, 191, 36, 1)",
+          "rgba(59, 130, 246, 1)",
+          "rgba(16, 185, 129, 1)",
+          "rgba(239, 68, 68, 1)",
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const statCards = isAdmin
+    ? [
+        {
+          title: "Total Users",
+          value: stats.totalUsers,
+          icon: Users,
+          color: "from-blue-500 to-blue-600",
+          bgColor: "bg-blue-50",
+          iconColor: "text-blue-600",
+          description: "Registered platform users",
+          change: `${stats.totalAdmins || 0} admins`,
+          changeType: "positive",
+        },
+        {
+          title: "Total Properties",
+          value: stats.totalProperties,
+          icon: Home,
+          color: "from-green-500 to-green-600",
+          bgColor: "bg-green-50",
+          iconColor: "text-green-600",
+          description: "All listed properties",
+          change: `${stats.totalOwners || 0} owners`,
+          changeType: "positive",
+        },
+        {
+          title: "Total Appointments",
+          value: stats.totalAppointments,
+          icon: Calendar,
+          color: "from-purple-500 to-purple-600",
+          bgColor: "bg-purple-50",
+          iconColor: "text-purple-600",
+          description: "Appointments across platform",
+          change: `${stats.pendingAppointments || 0} pending`,
+          changeType: "positive",
+        },
+        {
+          title: "Total Views",
+          value: stats.totalViews,
+          icon: Eye,
+          color: "from-orange-500 to-orange-600",
+          bgColor: "bg-orange-50",
+          iconColor: "text-orange-600",
+          description: "Global property page views",
+          change: "30-day trend",
+          changeType: "positive",
+        },
+      ]
+    : [
+        {
+          title: "Total Properties",
+          value: stats.totalProperties,
+          icon: Home,
+          color: "from-blue-500 to-blue-600",
+          bgColor: "bg-blue-50",
+          iconColor: "text-blue-600",
+          description: "Total properties listed",
+          change: "+12%",
+          changeType: "positive",
+        },
+        {
+          title: "Active Listings",
+          value: stats.activeListings,
+          icon: Activity,
+          color: "from-green-500 to-green-600",
+          bgColor: "bg-green-50",
+          iconColor: "text-green-600",
+          description: "Currently active listings",
+          change: "+8%",
+          changeType: "positive",
+        },
+        {
+          title: "Total Views",
+          value: stats.totalViews,
+          icon: Eye,
+          color: "from-purple-500 to-purple-600",
+          bgColor: "bg-purple-50",
+          iconColor: "text-purple-600",
+          description: "Property page views",
+          change: "+23%",
+          changeType: "positive",
+        },
+        {
+          title: "Pending Appointments",
+          value: stats.pendingAppointments,
+          icon: Calendar,
+          color: "from-orange-500 to-orange-600",
+          bgColor: "bg-orange-50",
+          iconColor: "text-orange-600",
+          description: "Awaiting confirmation",
+          change: "-5%",
+          changeType: "negative",
+        },
+      ];
 
   if (stats.loading) {
     return (
@@ -311,8 +396,6 @@ const Dashboard = () => {
     );
   }
 
-  console.log(stats);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -328,12 +411,13 @@ const Dashboard = () => {
         >
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
-              Dashboard Overview
+              {isAdmin ? "Admin Overview" : "Dashboard Overview"}
             </h1>
             <p className="text-lg text-gray-600 flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              Welcome back! Here&apos;s what&apos;s happening with your
-              properties
+              {isAdmin
+                ? "Welcome back! Here is a platform-wide snapshot"
+                : "Welcome back! Here is what is happening with your properties"}
             </p>
           </div>
 
@@ -450,10 +534,12 @@ const Dashboard = () => {
               <div>
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-blue-600" />
-                  Property Views Analytics
+                  {isAdmin ? "Platform Activity Trends" : "Property Views Analytics"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Track your property engagement over time
+                  {isAdmin
+                    ? "Appointments and views in the last 30 days"
+                    : "Track your property engagement over time"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -464,8 +550,13 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="h-[350px]">
-              {stats.viewsData && Object.keys(stats.viewsData).length > 0 ? (
-                <Line data={stats.viewsData} options={chartOptions} />
+              {(isAdmin ? stats.chartData : stats.viewsData) &&
+              Object.keys(isAdmin ? stats.chartData : stats.viewsData).length >
+                0 ? (
+                <Line
+                  data={isAdmin ? stats.chartData : stats.viewsData}
+                  options={chartOptions}
+                />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -493,18 +584,18 @@ const Dashboard = () => {
               <div>
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <PieChart className="w-5 h-5 text-purple-600" />
-                  Property Types
+                  {isAdmin ? "Appointment Status" : "Property Types"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Distribution overview
+                  {isAdmin ? "Platform appointment breakdown" : "Distribution overview"}
                 </p>
               </div>
             </div>
             <div className="h-[350px]">
-              {stats.propertyTypeData &&
-              Object.keys(stats.propertyTypeData).length > 0 ? (
+              {(isAdmin ? adminStatusDistribution : stats.propertyTypeData) &&
+              Object.keys(isAdmin ? adminStatusDistribution : stats.propertyTypeData).length > 0 ? (
                 <Doughnut
-                  data={stats.propertyTypeData}
+                  data={isAdmin ? adminStatusDistribution : stats.propertyTypeData}
                   options={doughnutOptions}
                 />
               ) : (
@@ -514,7 +605,9 @@ const Dashboard = () => {
                   </div>
                   <p className="text-gray-500 font-medium">No property data</p>
                   <p className="text-sm text-gray-400 text-center">
-                    Add properties to see distribution
+                    {isAdmin
+                      ? "Appointment data will appear as users schedule viewings"
+                      : "Add properties to see distribution"}
                   </p>
                 </div>
               )}
@@ -619,13 +712,23 @@ const Dashboard = () => {
               {/* Active Listing Rate */}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
                 <div>
-                  <p className="text-sm text-gray-600">Active Listing Rate</p>
+                  <p className="text-sm text-gray-600">
+                    {isAdmin ? "Confirmed Appointment Rate" : "Active Listing Rate"}
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalProperties > 0
-                      ? Math.round(
-                          (stats.activeListings / stats.totalProperties) * 100,
-                        )
-                      : 0}
+                    {isAdmin
+                      ? stats.totalAppointments > 0
+                        ? Math.round(
+                            ((stats.confirmedAppointments || 0) /
+                              stats.totalAppointments) *
+                              100,
+                          )
+                        : 0
+                      : stats.totalProperties > 0
+                        ? Math.round(
+                            (stats.activeListings / stats.totalProperties) * 100,
+                          )
+                        : 0}
                     %
                   </p>
                 </div>
@@ -637,9 +740,11 @@ const Dashboard = () => {
               {/* Appointment Conversion */}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl">
                 <div>
-                  <p className="text-sm text-gray-600">Pending Appointments</p>
+                  <p className="text-sm text-gray-600">
+                    {isAdmin ? "Completed Appointments" : "Pending Appointments"}
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.pendingAppointments}
+                    {isAdmin ? stats.completedAppointments : stats.pendingAppointments}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">

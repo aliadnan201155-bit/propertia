@@ -12,6 +12,7 @@ import {
   Settings,
   Bell,
   User,
+  Users,
   ChevronDown,
   CalendarCheck,
   CalendarDays
@@ -22,6 +23,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth(); // Added logout from useAuth
+  const isAdmin = user?.role === 'admin';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -66,10 +68,11 @@ const Navbar = () => {
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/list', label: 'Properties', icon: List },
-    { path: '/add', label: 'Add Property', icon: PlusSquare },
-    { path: '/appointments', label: 'Appointments', icon: CalendarCheck },
-    { path: '/my-meetings', label: 'My Meetings', icon: CalendarDays },
+    ...(isAdmin ? [{ path: '/users', label: 'Users', icon: Users }] : []),
+    { path: isAdmin ? '/admin/properties' : '/list', label: isAdmin ? 'Manage Properties' : 'Properties', icon: List },
+    ...(!isAdmin ? [{ path: '/add', label: 'Add Property', icon: PlusSquare }] : []),
+    { path: isAdmin ? '/admin/appointments' : '/appointments', label: isAdmin ? 'Manage Appointments' : 'Appointments', icon: CalendarCheck },
+    ...(!isAdmin ? [{ path: '/my-meetings', label: 'My Meetings', icon: CalendarDays }] : []),
   ];
 
   const containerVariants = {
@@ -116,7 +119,7 @@ const Navbar = () => {
               <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Propertia
               </span>
-              <div className="text-xs text-gray-500 font-medium">User Panel</div>
+              <div className="text-xs text-gray-500 font-medium">{isAdmin ? 'Admin Panel' : 'User Panel'}</div>
             </div>
           </Link>
           
@@ -192,8 +195,8 @@ const Navbar = () => {
                     className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
                   >
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <div className="text-sm font-medium text-gray-900">User Panel</div>
-                      <div className="text-xs text-gray-500">Manage your properties</div>
+                      <div className="text-sm font-medium text-gray-900">{isAdmin ? 'Admin Panel' : 'User Panel'}</div>
+                      <div className="text-xs text-gray-500">{isAdmin ? 'Manage platform overview' : 'Manage your properties'}</div>
                     </div>
                     {/* <button
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
