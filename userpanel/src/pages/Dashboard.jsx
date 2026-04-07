@@ -629,9 +629,9 @@ const Dashboard = () => {
                 <Activity className="w-5 h-5 text-green-600" />
                 Recent Activity
               </h2>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              {/* <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                 View All
-              </button>
+              </button> */}
             </div>
             <div className="space-y-4 max-h-[350px] overflow-y-auto">
               {stats.recentActivity?.length > 0 ? (

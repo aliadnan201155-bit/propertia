@@ -18,10 +18,12 @@ import {
   CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useRef } from 'react';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const profileOpenRef = useRef(null);
   const { user, logout } = useAuth(); // Added logout from useAuth
   const isAdmin = user?.role === 'admin';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,6 +38,22 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+   useEffect(() => {
+      function handleClickOutside(event) {
+        if (profileOpenRef.current && !profileOpenRef.current.contains(event.target)) {
+          setIsProfileOpen(false);
+        }
+      }
+    
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+  
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside);
+      };
+    }, []);
   
   const isActive = (path) => {
     return location.pathname === path;
@@ -188,6 +206,7 @@ const Navbar = () => {
               <AnimatePresence>
                 {isProfileOpen && (
                   <motion.div
+                  ref={profileOpenRef}
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}

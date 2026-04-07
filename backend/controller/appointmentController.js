@@ -753,7 +753,14 @@ export const adminListAppointments = async (req, res) => {
 
     const [appointments, total] = await Promise.all([
       Appointment.find(filter)
-        .populate('propertyId', 'title location')
+        .populate({
+          path: 'propertyId',
+          select: 'title location userId',
+          populate: {
+            path: 'userId',
+            select: 'name email role',
+          },
+        })
         .populate('userId', 'name email role')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -780,7 +787,14 @@ export const adminListAppointments = async (req, res) => {
 export const adminGetAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate('propertyId', 'title location')
+      .populate({
+        path: 'propertyId',
+        select: 'title location userId',
+        populate: {
+          path: 'userId',
+          select: 'name email role',
+        },
+      })
       .populate('userId', 'name email role');
 
     if (!appointment) {
