@@ -29,6 +29,8 @@ const formatRecentAppointments = (appointments) => {
 export const getOwnerStats = async (req, res) => {
   try {
     const userId = req.user._id;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // Get user's property IDs once
     const userPropertyIds = await Property.find({ userId }).select("_id");
@@ -55,6 +57,7 @@ export const getOwnerStats = async (req, res) => {
         propertyId: { $in: userPropertyIds },
         endpoint: /^\/api\/products\/single\//,
         method: "GET",
+        timestamp: { $gte: thirtyDaysAgo },
       })
     ]);
 
@@ -144,7 +147,7 @@ const getViewsData = async (userId) => {
     // Generate dates for last 30 days
     const labels = [];
     const data = [];
-    for (let i = 30; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateString = date.toISOString().split("T")[0];
@@ -526,6 +529,7 @@ export const getAdminOverviewStats = async (req, res) => {
       Stats.countDocuments({
         endpoint: /^\/api\/products\/single\//,
         method: "GET",
+        timestamp: { $gte: thirtyDaysAgo },
       }),
       Property.find().sort({ createdAt: -1 }).limit(5).select("title createdAt"),
       Appointment.find()
@@ -574,7 +578,7 @@ export const getAdminOverviewStats = async (req, res) => {
     const appointmentsData = [];
     const viewsData = [];
 
-    for (let i = 30; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateString = date.toISOString().split("T")[0];

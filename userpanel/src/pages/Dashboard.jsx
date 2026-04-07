@@ -289,7 +289,7 @@ const Dashboard = () => {
           color: "from-orange-500 to-orange-600",
           bgColor: "bg-orange-50",
           iconColor: "text-orange-600",
-          description: "Global property page views",
+          description: "Property page views in last 30 days",
           change: "30-day trend",
           changeType: "positive",
         },
