@@ -22,6 +22,9 @@ const AdminAppointments = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [editingId, setEditingId] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
@@ -38,11 +41,20 @@ const AdminAppointments = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(`${backendurl}/api/appointments/manage`, {
+        params: {
+          page,
+          limit,
+          status: statusFilter !== "all" ? statusFilter : undefined,
+        },
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.data.success) {
         setAppointments(response.data.appointments || []);
+        setPagination({
+          total: response.data.pagination?.total || 0,
+          pages: response.data.pagination?.pages || 1,
+        });
       } else {
         toast.error(response.data.message || "Failed to fetch appointments");
       }
@@ -56,7 +68,7 @@ const AdminAppointments = () => {
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [page, limit, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredAppointments = useMemo(() => {
     return appointments.filter((apt) => {
@@ -70,10 +82,9 @@ const AdminAppointments = () => {
         ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ownerEmail.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === "all" || apt.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [appointments, searchTerm, statusFilter]);
+  }, [appointments, searchTerm]);
 
   const startEdit = (apt) => {
     setEditingId(apt._id);
@@ -145,6 +156,24 @@ const AdminAppointments = () => {
     }
   };
 
+  const getPageNumbers = () => {
+    const totalPages = Math.max(1, pagination.pages || 1);
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, page - 1);
+    const end = Math.min(totalPages - 1, page + 1);
+
+    if (start > 2) pages.push("...");
+    for (let i = start; i <= end; i += 1) pages.push(i);
+    if (end < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
+
+    return pages;
+  };
+
   const exportCsv = () => {
     const rows = filteredAppointments.map((apt) => ({
       propertyTitle: apt.propertyId?.title || "N/A",
@@ -212,7 +241,10 @@ const AdminAppointments = () => {
 
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setStatusFilter(e.target.value);
+              }}
               className="px-3 py-2 border border-gray-200 rounded-lg"
             >
               <option value="all">All</option>
@@ -309,6 +341,61 @@ const AdminAppointments = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3">
+          <div className="text-sm text-gray-600">
+            Showing page {page} of {Math.max(1, pagination.pages)} ({pagination.total} appointments)
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={limit}
+              onChange={(e) => {
+                setPage(1);
+                setLimit(Number(e.target.value));
+              }}
+              className="rounded-lg border border-gray-200 px-2 py-1 text-sm"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <button
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page === 1}
+              className="rounded-lg border border-gray-200 px-3 py-1 text-sm disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <div className="flex items-center gap-1">
+              {getPageNumbers().map((pageItem, idx) =>
+                pageItem === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-sm text-gray-500">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={`page-${pageItem}`}
+                    onClick={() => setPage(pageItem)}
+                    className={`rounded-lg border px-3 py-1 text-sm ${
+                      page === pageItem
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {pageItem}
+                  </button>
+                )
+              )}
+            </div>
+            <button
+              onClick={() => setPage((prev) => Math.min(pagination.pages || 1, prev + 1))}
+              disabled={page >= (pagination.pages || 1)}
+              className="rounded-lg border border-gray-200 px-3 py-1 text-sm disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         </div>
 

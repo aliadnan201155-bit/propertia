@@ -40,6 +40,9 @@ const PropertyListings = ({ adminMode = false }) => {
   const [viewMode, setViewMode] = useState("grid"); // grid or list
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(9);
+  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
 
   const fetchProperties = async () => {
     try {
@@ -47,6 +50,13 @@ const PropertyListings = ({ adminMode = false }) => {
       const token = localStorage.getItem('token');
       const endpoint = isAdmin ? `${backendurl}/api/products/manage` : `${backendurl}/api/products/list`;
       const response = await axios.get(endpoint, {
+        params: isAdmin
+          ? {
+              page,
+              limit,
+              search: searchTerm || undefined,
+            }
+          : undefined,
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -58,6 +68,12 @@ const PropertyListings = ({ adminMode = false }) => {
           amenities: parseAmenities(property.amenities)
         }));
         setProperties(parsedProperties);
+        if (isAdmin) {
+          setPagination({
+            total: response.data.pagination?.total || 0,
+            pages: response.data.pagination?.pages || 1,
+          });
+        }
       } else {
         toast.error(response.data.error);
       }
@@ -97,7 +113,15 @@ const PropertyListings = ({ adminMode = false }) => {
   };
 
   useEffect(() => {
-    fetchProperties();
+    if (isAdmin) {
+      fetchProperties();
+    }
+  }, [isAdmin, page, limit, searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isAdmin) {
+      fetchProperties();
+    }
   }, [isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRemoveProperty = async (propertyId, propertyTitle) => {
@@ -207,6 +231,24 @@ const PropertyListings = ({ adminMode = false }) => {
           return 0;
       }
     });
+
+  const getPageNumbers = () => {
+    const totalPages = Math.max(1, pagination.pages || 1);
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, page - 1);
+    const end = Math.min(totalPages - 1, page + 1);
+
+    if (start > 2) pages.push("...");
+    for (let i = start; i <= end; i += 1) pages.push(i);
+    if (end < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
+
+    return pages;
+  };
 
   // Animation variants
   const containerVariants = {
@@ -419,7 +461,10 @@ const PropertyListings = ({ adminMode = false }) => {
                 type="text"
                 placeholder="Search by title, location, or property type..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  if (isAdmin) setPage(1);
+                  setSearchTerm(e.target.value);
+                }}
                 className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
             </div>
@@ -688,6 +733,63 @@ const PropertyListings = ({ adminMode = false }) => {
             </div>
           )}
         </motion.div>
+
+        {isAdmin && (
+          <div className="mt-6 mb-10 flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3">
+            <div className="text-sm text-gray-600">
+              Showing page {page} of {Math.max(1, pagination.pages)} ({pagination.total} properties)
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setPage(1);
+                  setLimit(Number(e.target.value));
+                }}
+                className="rounded-lg border border-gray-200 px-2 py-1 text-sm"
+              >
+                <option value={9}>9</option>
+                <option value={18}>18</option>
+                <option value={36}>36</option>
+              </select>
+              <button
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page === 1}
+                className="rounded-lg border border-gray-200 px-3 py-1 text-sm disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((pageItem, idx) =>
+                  pageItem === "..." ? (
+                    <span key={`ellipsis-${idx}`} className="px-2 text-sm text-gray-500">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={`page-${pageItem}`}
+                      onClick={() => setPage(pageItem)}
+                      className={`rounded-lg border px-3 py-1 text-sm ${
+                        page === pageItem
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageItem}
+                    </button>
+                  )
+                )}
+              </div>
+              <button
+                onClick={() => setPage((prev) => Math.min(pagination.pages || 1, prev + 1))}
+                disabled={page >= (pagination.pages || 1)}
+                className="rounded-lg border border-gray-200 px-3 py-1 text-sm disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
