@@ -13,6 +13,7 @@ import newsrouter from './routes/newsRoute.js';
 import appointmentRouter from './routes/appointmentRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import propertyRoutes from './routes/propertyRoutes.js';
+import chatbotRouter from './routes/chatbotRoute.js';
 import getStatusPage from './serverweb.js';
 
 
@@ -105,6 +106,7 @@ app.use('/api/forms', formrouter);
 app.use('/api/news', newsrouter);
 app.use('/api/appointments', appointmentRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/chatbot', chatbotRouter);
 app.use('/api', propertyRoutes);
 
 
@@ -143,8 +145,8 @@ process.on('SIGTERM', () => {
 
 // Status check endpoint
 app.get('/status', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'OK',
     time: new Date().toISOString(),
     uptime: process.uptime(),
     version: process.env.npm_package_version || '1.0.0',

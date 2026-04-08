@@ -19,7 +19,12 @@ import {
   Compass,
 } from "lucide-react";
 import { Backendurl } from "../../App.jsx";
+
 import ScheduleViewing from "./ScheduleViewing";
+
+// // Yahan humne App.jsx ka import hata kar direct URL de diya hai
+// const Backendurl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+
 
 const PropertyDetails = () => {
   const { id } = useParams();
