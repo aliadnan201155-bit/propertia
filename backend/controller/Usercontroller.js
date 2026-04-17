@@ -35,7 +35,7 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, Registeruser.password);
     if (isMatch) {
       const token = createtoken(Registeruser._id);
-      return res.json({ token, user: { name: Registeruser.name, email: Registeruser.email }, success: true });
+      return res.json({ token, user: { name: Registeruser.name, email: Registeruser.email, role: Registeruser.role }, success: true });
     } else {
       return res.json({ message: "Invalid password", success: false });
     }
@@ -204,7 +204,7 @@ const verifyToken = async (req, res) => {
 
 // get name and email
 
-const getname = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
     const user = await userModel.findById(req.user.id).select("-password");
     return res.json(user);
@@ -370,7 +370,7 @@ export {
   resetpassword,
   adminlogin,
   logout,
-  getname,
+  getProfile,
   verifyToken,
   adminListUsers,
   adminGetUserById,

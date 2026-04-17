@@ -5,7 +5,7 @@ import {
   forgotpassword,
   adminlogin,
   resetpassword,
-  getname,
+  getProfile,
   verifyToken,
   logout,
   adminListUsers,
@@ -25,7 +25,7 @@ userrouter.post('/forgot', forgotpassword);
 userrouter.post('/reset/:token', resetpassword);
 userrouter.post('/admin', adminlogin);
 userrouter.post('/logout', logout);
-userrouter.get('/me', authMiddleware, getname);
+userrouter.get('/me', authMiddleware, getProfile);
 userrouter.get('/verify-token', verifyToken);
 
 // Admin-only CRUD routes

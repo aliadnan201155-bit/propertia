@@ -13,6 +13,5 @@ export const API_ENDPOINTS = {
 // App constants
 export const APP_CONSTANTS = {
   TOKEN_KEY: 'token',
-  IS_ADMIN_KEY: 'isAdmin',
   DEFAULT_TOAST_DURATION: 3000
 };

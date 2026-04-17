@@ -1,70 +1,73 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, 
-  List, 
-  PlusSquare, 
-  Menu, 
-  X, 
-  LogOut, 
-  LayoutDashboard, 
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Home,
+  List,
+  PlusSquare,
+  Menu,
+  X,
+  LogOut,
+  LayoutDashboard,
   Settings,
   Bell,
   User,
   Users,
   ChevronDown,
   CalendarCheck,
-  CalendarDays
-} from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useRef } from 'react';
+  CalendarDays,
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { useRef } from "react";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const profileOpenRef = useRef(null);
   const { user, logout } = useAuth(); // Added logout from useAuth
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
+
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-   useEffect(() => {
-      function handleClickOutside(event) {
-        if (profileOpenRef.current && !profileOpenRef.current.contains(event.target)) {
-          setIsProfileOpen(false);
-        }
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        profileOpenRef.current &&
+        !profileOpenRef.current.contains(event.target)
+      ) {
+        setIsProfileOpen(false);
       }
-    
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-  
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside);
-      };
-    }, []);
-  
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
   const isActive = (path) => {
     return location.pathname === path;
   };
-  
+
   const handleLogout = async () => {
     // Use AuthContext logout which calls backend API
     await logout();
-    navigate('/login');
+    navigate("/login");
   };
-  
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
     setIsProfileOpen(false);
@@ -84,63 +87,100 @@ const Navbar = () => {
       .toUpperCase();
   };
 
+  // const navItems = [
+  //   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  //   ...(isAdmin ? [{ path: '/users', label: 'Users', icon: Users }] : []),
+  //   { path: isAdmin ? '/admin/properties' : '/list', label: isAdmin ? 'Manage Properties' : 'Properties', icon: List },
+  //   ...(!isAdmin ? [{ path: '/add', label: 'Add Property', icon: PlusSquare }] : []),
+  //   { path: isAdmin ? '/admin/appointments' : '/appointments', label: isAdmin ? 'Manage Appointments' : 'Appointments', icon: CalendarCheck },
+  //   ...(!isAdmin ? [{ path: '/my-meetings', label: 'My Meetings', icon: CalendarDays }] : []),
+  // ];
+
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ...(isAdmin ? [{ path: '/users', label: 'Users', icon: Users }] : []),
-    { path: isAdmin ? '/admin/properties' : '/list', label: isAdmin ? 'Manage Properties' : 'Properties', icon: List },
-    ...(!isAdmin ? [{ path: '/add', label: 'Add Property', icon: PlusSquare }] : []),
-    { path: isAdmin ? '/admin/appointments' : '/appointments', label: isAdmin ? 'Manage Appointments' : 'Appointments', icon: CalendarCheck },
-    ...(!isAdmin ? [{ path: '/my-meetings', label: 'My Meetings', icon: CalendarDays }] : []),
+    {
+      path: isAdmin ? "/admin/dashboard" : "/owner/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+    },
+
+    ...(isAdmin ? [{ path: "/admin/users", label: "Users", icon: Users }] : []),
+
+    {
+      path: isAdmin ? "/admin/properties" : "/owner/list",
+      label: "Properties",
+      icon: List,
+    },
+
+    ...(!isAdmin
+      ? [{ path: "/owner/add", label: "Add Property", icon: PlusSquare }]
+      : []),
+
+    {
+      path: isAdmin ? "/admin/appointments" : "/owner/appointments",
+      label: "Appointments",
+      icon: CalendarCheck,
+    },
+
+    ...(!isAdmin
+      ? [
+          {
+            path: "/owner/my-meetings",
+            label: "My Meetings",
+            icon: CalendarDays,
+          },
+        ]
+      : []),
   ];
 
   const containerVariants = {
     hidden: { opacity: 0, y: -10 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { 
+      transition: {
         duration: 0.3,
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, x: -10 },
-    visible: { opacity: 1, x: 0 }
+    visible: { opacity: 1, x: 0 },
   };
 
   return (
-    <motion.header 
+    <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50' 
-          : 'bg-white shadow-md'
+        scrolled
+          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50"
+          : "bg-white shadow-md"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center group">
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="relative p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300"
             >
               <Home className="h-5 w-5 text-white" />
-              
             </motion.div>
             <div className="ml-3">
               <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Propertia
               </span>
-              <div className="text-xs text-gray-500 font-medium">{isAdmin ? 'Admin Panel' : 'User Panel'}</div>
+              <div className="text-xs text-gray-500 font-medium">
+                {isAdmin ? "Admin Panel" : "User Panel"}
+              </div>
             </div>
           </Link>
-          
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
@@ -149,14 +189,16 @@ const Navbar = () => {
                 to={item.path}
                 className={`relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
                   isActive(item.path)
-                    ? 'text-blue-700 bg-blue-50 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? "text-blue-700 bg-blue-50 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center">
-                  <item.icon className={`h-4 w-4 mr-2 transition-colors ${
-                    isActive(item.path) ? 'text-blue-600' : 'text-gray-500'
-                  }`} />
+                  <item.icon
+                    className={`h-4 w-4 mr-2 transition-colors ${
+                      isActive(item.path) ? "text-blue-600" : "text-gray-500"
+                    }`}
+                  />
                   {item.label}
                 </div>
                 {isActive(item.path) && (
@@ -195,18 +237,24 @@ const Navbar = () => {
                   {getInitials(user?.name)}
                 </div>
                 <div className="text-left hidden lg:block">
-                  <div className="text-sm font-medium text-gray-900">{user?.name || ' '}</div>
-                  <div className="text-xs text-gray-500">{user?.email || ' '}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {user?.name || " "}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {user?.email || " "}
+                  </div>
                 </div>
-                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
-                  isProfileOpen ? 'rotate-180' : ''
-                }`} />
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                    isProfileOpen ? "rotate-180" : ""
+                  }`}
+                />
               </motion.button>
 
               <AnimatePresence>
                 {isProfileOpen && (
                   <motion.div
-                  ref={profileOpenRef}
+                    ref={profileOpenRef}
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -214,8 +262,14 @@ const Navbar = () => {
                     className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
                   >
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <div className="text-sm font-medium text-gray-900">{isAdmin ? 'Admin Panel' : 'User Panel'}</div>
-                      <div className="text-xs text-gray-500">{isAdmin ? 'Manage platform overview' : 'Manage your properties'}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {isAdmin ? "Admin Panel" : "User Panel"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {isAdmin
+                          ? "Manage platform overview"
+                          : "Manage your properties"}
+                      </div>
                     </div>
                     {/* <button
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
@@ -235,7 +289,7 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
           </div>
-          
+
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <motion.button
@@ -258,7 +312,7 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -276,38 +330,45 @@ const Navbar = () => {
                     to={item.path}
                     className={`flex items-center px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
                       isActive(item.path)
-                        ? 'bg-blue-50 text-blue-700 border border-blue-100'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? "bg-blue-50 text-blue-700 border border-blue-100"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <item.icon className={`h-5 w-5 mr-3 ${
-                      isActive(item.path) ? 'text-blue-600' : 'text-gray-500'
-                    }`} />
+                    <item.icon
+                      className={`h-5 w-5 mr-3 ${
+                        isActive(item.path) ? "text-blue-600" : "text-gray-500"
+                      }`}
+                    />
                     {item.label}
                   </Link>
                 </motion.div>
               ))}
-              
+
               {/* Mobile Profile Section */}
-              <motion.div variants={itemVariants} className="pt-4 border-t border-gray-200">
+              <motion.div
+                variants={itemVariants}
+                className="pt-4 border-t border-gray-200"
+              >
                 <div className="flex items-center px-4 py-3 mb-2">
                   <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                     {getInitials(user?.name)}
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-gray-900">{user?.name || 'Admin'}</div>
-                    <div className="text-xs text-gray-500">{user?.email || 'Administrator'}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {user?.name || "Admin"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {user?.email || "Administrator"}
+                    </div>
                   </div>
                 </div>
-                
-                <button
-                  className="w-full text-left px-4 py-3 rounded-xl text-sm text-gray-700 hover:bg-gray-50 flex items-center mb-2"
-                >
+
+                <button className="w-full text-left px-4 py-3 rounded-xl text-sm text-gray-700 hover:bg-gray-50 flex items-center mb-2">
                   <Settings className="h-4 w-4 mr-3" />
                   Settings
                 </button>
-                
+
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-3 rounded-xl text-sm text-red-600 hover:bg-red-50 flex items-center"
