@@ -40,11 +40,6 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
     };
   }, []);
 
-  const isWeekend = (date) => {
-    const d = new Date(date);
-    return d.getDay() === 0 || d.getDay() === 6;
-  };
-
   const isPastTime = (time) => {
     const [hours, minutes] = time.split(':').map(Number);
     const now = new Date();
@@ -56,10 +51,6 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
 
   const handleDateChange = (e) => {
     const selectedDate = e.target.value;
-    if (isWeekend(selectedDate)) {
-      toast.error('Viewings are not available on weekends');
-      return;
-    }
     setFormData(prev => ({ ...prev, date: selectedDate, time: '' }));
   };
 
@@ -98,10 +89,8 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
   
       if (response.data.success) {
         setIsSuccess(true);
-        setTimeout(() => {
-          onClose();
-        }, 3000); // Auto close after 3 seconds
       }
+
     } catch (error) {
       console.error('Scheduling error:', error);
       const errorMessage = error.response?.data?.message || 'Error scheduling viewing';
@@ -218,7 +207,7 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
                       </div>
                       <p className="text-xs text-gray-500 mt-1.5 flex items-center">
                         <Info className="w-3 h-3 mr-1 inline flex-shrink-0" />
-                        Available Monday to Friday, up to 30 days in advance
+                        Available all days, up to 30 days in advance
                       </p>
                     </div>
 
@@ -378,7 +367,7 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
               </div>
               
               <p className="text-sm text-gray-500 mb-6">
-                One of our agents will contact you to confirm the details.
+                For any help or assistance, please contact our support team via the contact page.
               </p>
               
               <button
@@ -390,15 +379,7 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
             </motion.div>
           )}
           
-          {/* Additional services info */}
-          {!isSuccess && (
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <div className="flex items-center text-sm text-gray-600">
-                <Users className="w-4 h-4 text-blue-600 mr-2" />
-                <span>A qualified agent will guide you through the viewing</span>
-              </div>
-            </div>
-          )}
+         
         </motion.div>
       </motion.div>
     </AnimatePresence>

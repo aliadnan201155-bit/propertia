@@ -61,7 +61,7 @@ const ChatBot = ({ onClose }) => {
 
         if (data.adminContact) {
           setTimeout(() => {
-            const contactMsg = `📞 **Contact Our Team:**\n📧 ${data.adminContact.email}\n📱 ${data.adminContact.phone}\n\nWe're here to help! 😊`;
+            const contactMsg = `📞 Contact Our Team:\n📧 ${data.adminContact.email}\n📱 ${data.adminContact.phone}\n\nWe're here to help! 😊`;
             setMessages((prev) => [...prev, { text: contactMsg, isUser: false }]);
           }, 500);
         }
