@@ -69,6 +69,8 @@ const AppLayout = () => {
                 <Route path="/admin/dashboard" element={<Dashboard />} />
                 <Route path="/admin/users" element={<UsersManagement />} />
                 <Route path="/admin/properties" element={<AdminProperties />} />
+                <Route path="/admin/add" element={<Add />} />
+                <Route path="/admin/update/:id" element={<Update />} />
                 <Route path="/admin/appointments" element={<AdminAppointments />} />
               </Route>
 

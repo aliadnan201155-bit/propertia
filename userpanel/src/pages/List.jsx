@@ -31,6 +31,9 @@ import { useAuth } from "../hooks/useAuth";
 const PropertyListings = ({ adminMode = false }) => {
   const { user } = useAuth();
   const isAdmin = adminMode || user?.role === "admin";
+  const addPropertyPath = isAdmin ? "/admin/add" : "/owner/add";
+  const getEditPath = (propertyId) =>
+    isAdmin ? `/admin/update/${propertyId}` : `/owner/update/${propertyId}`;
 
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -367,7 +370,7 @@ const PropertyListings = ({ adminMode = false }) => {
                 <span className="hidden sm:inline">Refresh</span>
               </motion.button>
               
-              <Link to="/add">
+              <Link to={addPropertyPath}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -556,7 +559,7 @@ const PropertyListings = ({ adminMode = false }) => {
                   }
                 </p>
                 {(!searchTerm && filterType === "all") && (
-                  <Link to="/add">
+                  <Link to={addPropertyPath}>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -624,7 +627,7 @@ const PropertyListings = ({ adminMode = false }) => {
                       {/* Action Buttons */}
                       <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                         <Link 
-                          to={`/update/${property._id}`}
+                          to={getEditPath(property._id)}
                           className="p-2 bg-white/90 backdrop-blur-sm text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-all duration-200 shadow-lg"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -712,7 +715,7 @@ const PropertyListings = ({ adminMode = false }) => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Link 
-                              to={`/update/${property._id}`}
+                              to={getEditPath(property._id)}
                               className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                             >
                               <Edit3 className="w-4 h-4" />

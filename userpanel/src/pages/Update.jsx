@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { backendurl } from '../config/constants';
 import { X, Upload } from 'lucide-react';
+import { useAuth } from "../hooks/useAuth";
 
 const PROPERTY_TYPES = ['House', 'Apartment', 'Office', 'Villa'];
 const AVAILABILITY_TYPES = ['rent', 'buy'];
@@ -13,6 +14,8 @@ const AMENITIES = ['Lake View', 'Fireplace', , 'Master Bedroom', 'West Open', 'C
 const Update = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [formData, setFormData] = useState({
     title: '',
     type: '',
@@ -149,7 +152,7 @@ const Update = () => {
       });
       if (response.data.success) {
         toast.success('Property updated successfully');
-        navigate('/list');
+        navigate(isAdmin ? "/admin/properties" : "/owner/list");
       } else {
         toast.error(response.data.message);
       }
