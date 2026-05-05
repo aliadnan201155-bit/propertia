@@ -481,7 +481,7 @@ const Dashboard = () => {
                   >
                     <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
                   </div>
-                  <div className="text-right">
+                  {/* <div className="text-right">
                     <div
                       className={`flex items-center gap-1 text-sm font-medium ${
                         stat.changeType === "positive"
@@ -497,7 +497,7 @@ const Dashboard = () => {
                       {stat.change}
                     </div>
                     <span className="text-xs text-gray-500">vs last month</span>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="space-y-2">
