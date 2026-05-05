@@ -32,6 +32,10 @@ const login = async (req, res) => {
     if (!Registeruser) {
       return res.json({ message: "Email not found", success: false });
     }
+    // Check if user account is active
+    if (!Registeruser.isActive) {
+      return res.json({ message: "Your account has been deactivated. Please contact support.", success: false });
+    }
     const isMatch = await bcrypt.compare(password, Registeruser.password);
     if (isMatch) {
       const token = createtoken(Registeruser._id);
@@ -111,6 +115,10 @@ const resetpassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "Invalid or expired token", success: false });
     }
+    // Prevent deactivated users from resetting password
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Your account has been deactivated. Password reset is not allowed.", success: false });
+    }
     user.password = await bcrypt.hash(password, 10);
     user.resetToken = undefined;
     user.resetTokenExpire = undefined;
@@ -129,6 +137,10 @@ const adminlogin = async (req, res) => {
     const user = await userModel.findOne({ email });
 
     if (user) {
+      // Check if admin account is active
+      if (!user.isActive) {
+        return res.json({ message: "Your admin account has been deactivated. Please contact support.", success: false });
+      }
       const isMatch = await bcrypt.compare(password, user.password);
       if (isMatch) {
         const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
