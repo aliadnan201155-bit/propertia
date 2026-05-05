@@ -367,7 +367,7 @@ export const chat = async (req, res) => {
         }
 
         // Greeting detection
-        if (/\b(hi|hello|hey|assalam|salam|start|begin|kmk|suno|bhai|ji|acha)\b/i.test(text)) {
+        if (/\b(hy|hai|hey|hi|hello|hey|assalam|salam|start|begin|kmk|suno|bhai|ji|acha)\b/i.test(text)) {
             return res.json({
                 success: true,
                 reply: `👋 Assalamu Alaikum! Welcome to PropX! 🏠\n\nI'm your friendly property assistant. Tell me what you're looking for:\n🏡 "Rent ke liye Apartment"\n🏢 "3 beds se zyada wala ghar"\n🌟 "DHA mein property under 50M"`
