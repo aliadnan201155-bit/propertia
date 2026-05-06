@@ -227,9 +227,7 @@ const PropertiesShow = () => {
         const response = await axios.get(`${Backendurl}/api/products/public/list`);
         
         if (response.data.success) {
-          // Take only the first 6 properties for featured section
-          const featuredProperties = response.data.property.slice(0, 6);
-          setProperties(featuredProperties);
+          setProperties(response.data.property);
         } else {
           setError('Failed to fetch properties');
           // Fallback to sample data in case of API error
@@ -251,6 +249,8 @@ const PropertiesShow = () => {
   const filteredProperties = activeCategory === 'all' 
     ? properties 
     : properties.filter(property => property.type.toLowerCase() === activeCategory);
+
+  const displayedProperties = filteredProperties.slice(0, 6);
 
   const viewAllProperties = () => {
     navigate('/properties');
@@ -349,7 +349,7 @@ const PropertiesShow = () => {
             animate="visible"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {filteredProperties.map((property) => (
+            {displayedProperties.map((property) => (
               <motion.div key={property._id} variants={itemVariants}>
                 <PropertyCard property={property} />
               </motion.div>
