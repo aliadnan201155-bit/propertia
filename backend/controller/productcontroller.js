@@ -180,8 +180,10 @@ const updateproperty = async (req, res) => {
       }
     }
 
-    // Only allow user to update their own property
-    const property = await Property.findOne({ _id: id, userId: req.user._id });
+    // Admins can update any property; others can update only their own
+    const property = req.user?.role === "admin"
+      ? await Property.findById(id)
+      : await Property.findOne({ _id: id, userId: req.user._id });
     if (!property) {
       console.log("Property not found with ID:", id); // Debugging line
       return res.status(404).json({
