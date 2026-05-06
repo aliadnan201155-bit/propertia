@@ -654,6 +654,13 @@ const PropertyListings = ({ adminMode = false }) => {
                             <MapPin className="w-4 h-4 mr-2 text-gray-400" />
                             <span className="text-sm">{property.location}</span>
                           </div>
+                          {isAdmin && (
+                            <div className="text-sm text-gray-600 mb-3">
+                              <span className="font-medium text-gray-700">Owner:</span>{" "}
+                              {property.userId?.name || "Unknown"}
+                              {property.userId?.email ? ` (${property.userId.email})` : ""}
+                            </div>
+                          )}
                           <div className="flex items-center justify-between">
                             <p className="text-3xl font-bold text-gray-900">
                               Rs {property.price.toLocaleString()}
