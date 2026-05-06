@@ -264,7 +264,7 @@ const updateproperty = async (req, res) => {
 const singleproperty = async (req, res) => {
   try {
     const { id } = req.params;
-    const property = await Property.findById(id);
+    const property = await Property.findById(id).populate("userId", "name email");
     if (!property) {
       return res
         .status(404)

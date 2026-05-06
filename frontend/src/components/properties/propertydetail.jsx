@@ -8,6 +8,8 @@ import {
   Maximize,
   ArrowLeft,
   Phone,
+  User,
+  Mail,
   Calendar,
   MapPin,
   Loader,
@@ -24,7 +26,6 @@ import ScheduleViewing from "./ScheduleViewing";
 
 // // Yahan humne App.jsx ka import hata kar direct URL de diya hai
 // const Backendurl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -46,11 +47,11 @@ const PropertyDetails = () => {
         const response = await axios.get(
           `${Backendurl}/api/products/single/${id}`,
           {
-            signal: abortController.signal, 
+            signal: abortController.signal,
           },
         );
 
-        if (!isMounted) return; 
+        if (!isMounted) return;
 
         if (response.data.success) {
           const propertyData = response.data.property;
@@ -265,6 +266,16 @@ const PropertyDetails = () => {
       </div>
     );
   }
+  
+  const InfoRow = ({ icon: Icon, label, children }) => {
+    return (
+      <div className="flex items-center gap-3 text-gray-600">
+        <Icon className="w-5 h-5" />
+        <span className="font-medium text-gray-700 min-w-[55px]">{label}:</span>
+        <span className="truncate">{children}</span>
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -408,9 +419,71 @@ const PropertyDetails = () => {
                   <h2 className="text-xl font-semibold mb-4">
                     Contact Details
                   </h2>
-                  <div className="flex items-center text-gray-600">
-                    <Phone className="w-5 h-5 mr-2" />
-                    {property.phone}
+                  {/* <div className="space-y-2 text-gray-600">
+                    <div className="flex items-center">
+                      <User className="w-5 h-5 mr-2" />
+                      <span className="font-medium text-gray-700">Name: </span>{" "}
+                      {property.userId?.name || "Not available"}
+                    </div>
+                    <div className="flex items-center">
+                      <Mail className="w-5 h-5 mr-2" />
+                      <span className="font-medium text-gray-700">Email: </span>{" "}
+                      {property.userId?.email ? (
+                        <a
+                          href={`mailto:${property.userId.email}`}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          {property.userId.email}
+                        </a>
+                      ) : (
+                        "Not available"
+                      )}
+                    </div>
+                    <div className="flex items-center">
+                      <Phone className="w-5 h-5 mr-2" />
+                      <span className="font-medium text-gray-700">Phone: </span>{" "}
+                      {property.phone ? (
+                        <a
+                          href={`tel:${property.phone}`}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          {property.phone}
+                        </a>
+                      ) : (
+                        "Not available"
+                      )}
+                    </div>
+                  </div> */}
+                  <div className="space-y-3">
+                    <InfoRow label="Name" icon={User}>
+                      {property.userId?.name || "Not available"}
+                    </InfoRow>
+
+                    <InfoRow label="Email" icon={Mail}>
+                      {property.userId?.email ? (
+                        <a
+                          href={`mailto:${property.userId.email}`}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          {property.userId.email}
+                        </a>
+                      ) : (
+                        "Not available"
+                      )}
+                    </InfoRow>
+
+                    <InfoRow label="Phone" icon={Phone}>
+                      {property.phone ? (
+                        <a
+                          href={`tel:${property.phone}`}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          {property.phone}
+                        </a>
+                      ) : (
+                        "Not available"
+                      )}
+                    </InfoRow>
                   </div>
                 </div>
 
