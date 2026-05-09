@@ -455,7 +455,7 @@ export const chat = async (req, res) => {
         // NEW: Amenities — resolve synonyms then require ALL of them (AND logic)
         if (analyzedFilters.amenities && analyzedFilters.amenities.length > 0) {
             const resolved = [...new Set(analyzedFilters.amenities.map(resolveAmenity))];
-            query.$and = resolved.map(amenity => ({
+            query.$or = resolved.map(amenity => ({
                 amenities: { $elemMatch: { $regex: amenity, $options: 'i' } }
             }));
         }
