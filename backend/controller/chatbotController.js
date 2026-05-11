@@ -1,15 +1,14 @@
 import Property from '../models/propertymodel.js';
 import Groq from 'groq-sdk';
 
-// Initialize Groq client
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-});
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-let availableLocations = []; // Will be populated from DB
+let availableLocations = [];
 
-// ── NEW: Amenity synonym map ──────────────────────────────────────────────────
-// Canonical name → all keywords/synonyms that should match it
+// ═════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═════════════════════════════════════════════════════════════════════════════
+
 const AMENITY_MAP = {
     'swimming pool'   : ['pool', 'swim', 'swimming'],
     'home theater'    : ['theater', 'theatre', 'cinema', 'movie room'],
@@ -29,7 +28,12 @@ const AMENITY_MAP = {
     'rooftop'         : ['rooftop', 'roof top', 'roof access'],
 };
 
-// ── NEW: Resolve user keyword → canonical amenity name ───────────────────────
+const CONTACT = { phone: '+92 (021) 567-567', email: 'support@propertia.com' };
+
+// ═════════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═════════════════════════════════════════════════════════════════════════════
+
 function resolveAmenity(keyword) {
     const lower = keyword.toLowerCase().trim();
     for (const [canonical, synonyms] of Object.entries(AMENITY_MAP)) {
@@ -37,63 +41,33 @@ function resolveAmenity(keyword) {
             return canonical;
         }
     }
-    return lower; // Return as-is if no synonym match
+    return lower;
 }
 
-/**
- * Build an array of $or location regex patterns from a user's location string.
- *
- * Handles all spacing/casing variations so that:
- *   "luckyone"  → also matches "lucky one", "Lucky One", "lucky-one"
- *   "lucky one" → also matches "luckyone", "LuckyOne", "lucky-one"
- *   "emaar"     → matches "Emaar Crescent Bay Karachi" and any emaar listing
- *
- * Returns an array ready to drop into a MongoDB $or clause.
- */
 function buildLocationPatterns(locationStr) {
     const lower = locationStr.trim().toLowerCase();
     const patterns = new Set();
 
-    // 1. Original string — direct match
     patterns.add(lower);
-
-    // 2. All spaces removed → "lucky one" becomes "luckyone"
-    //    Catches joined variants when user typed spaced version
     const noSpaces = lower.replace(/\s+/g, '');
     if (noSpaces !== lower) patterns.add(noSpaces);
-
-    // 3. Spaces made flexible → "lucky one" becomes regex "lucky[\s\-]*one"
-    //    Catches: "luckyone", "lucky one", "lucky-one" in one pattern
-    if (lower.includes(' ')) {
-        patterns.add(lower.replace(/\s+/g, '[\\s\\-]*'));
-    }
-
-    // 4. Character-level optional separators for single compound words
-    //    "luckyone" → "l[\s\-]?u[\s\-]?c[\s\-]?k[\s\-]?y[\s\-]?o[\s\-]?n[\s\-]?e"
-    //    Catches: "luckyone", "lucky one", "lucky-one", "Lucky One" all in one shot
-    if (!lower.includes(' ') && lower.length <= 25) {
-        patterns.add(lower.split('').join('[\\s\\-]?'));
-    }
-
-    // 5. Each individual significant word (length > 2) for broad partial matching
-    //    "emaar crescent bay" → also tries ["emaar", "crescent", "bay"] individually
+    if (lower.includes(' ')) patterns.add(lower.replace(/\s+/g, '[\\s\\-]*'));
+    if (!lower.includes(' ') && lower.length <= 25) patterns.add(lower.split('').join('[\\s\\-]?'));
+    
     const words = lower.split(/\s+/).filter(w => w.length > 2);
     words.forEach(w => patterns.add(w));
 
-    // Return as MongoDB $or-ready condition array
-    return [...patterns].map(p => ({ location: { $regex: p, $options: 'i' } }));
+    return [...patterns].map(p => ({ 
+        $or: [
+            { location: { $regex: p, $options: 'i' } },
+            { title: { $regex: p, $options: 'i' } }  // NEW: search title too
+        ]
+    }));
 }
 
-/**
- * Domain restriction — Level 1.
- * Catches known off-topic categories before Groq is ever called.
- * Expanded to cover: world news, public figures, current events, and all
- * non-real-estate domains so they never reach the filter pipeline.
- */
 function isOffTopicQuestion(text) {
     const lower = text.toLowerCase();
 
-    // World / current events triggers — catches "what is trump doing", "latest news" etc.
     const newsAndPeoplePhrases = [
         /\btrump\b/, /\bbiden\b/, /\bmodi\b/, /\bimran\b/, /\bzardari\b/,
         /\bnews\b/, /\bbreaking\b/, /\blatest\b.*\bnews\b/, /\btoday.*news\b/,
@@ -104,427 +78,513 @@ function isOffTopicQuestion(text) {
     ];
     if (newsAndPeoplePhrases.some(rx => rx.test(lower))) return true;
 
-    // Keyword-based off-topic categories
     const offTopicKeywords = [
-        // Entertainment
         'drama', 'movie', 'film', 'actor', 'actress', 'celebrity', 'trending', 'viral',
         'netflix', 'youtube', 'tiktok', 'instagram', 'twitter', 'facebook',
-        // Sports
         'cricket', 'football', 'soccer', 'sports', 'match', 'player', 'tournament',
         'fifa', 'psl', 'ipl', 'worldcup', 'olympics',
-        // Food
-        'recipe', 'food', 'cooking', 'dish', 'restaurant', 'biryani', 'pizza',
-        // Weather
+        'recipe', 'food', 'cooking', 'dish', 'biryani', 'pizza',
         'weather', 'temperature', 'rain', 'sunny', 'forecast', 'humidity',
-        // Comedy / misc
         'joke', 'funny', 'meme', 'comedy', 'prank',
-        // Politics (generic)
         'politics', 'election', 'government', 'minister', 'parliament', 'vote',
-        // Music
         'music', 'song', 'singer', 'album', 'concert', 'lyrics',
-        // Fashion
         'fashion', 'clothes', 'dress', 'style', 'outfit', 'makeup',
-        // Health
         'health', 'doctor', 'medicine', 'hospital', 'disease', 'symptoms', 'treatment',
-        // Education
         'school', 'college', 'university', 'education', 'degree', 'exam', 'admission',
-        // Vehicles
         'car', 'bike', 'vehicle', 'transport', 'motorcycle', 'truck',
-        // Tech / unrelated
         'iphone', 'android', 'laptop', 'gaming', 'software', 'coding',
     ];
 
-    return offTopicKeywords.some(keyword =>
-        new RegExp(`\\b${keyword}\\b`, 'i').test(lower)
-    );
+    return offTopicKeywords.some(keyword => new RegExp(`\\b${keyword}\\b`, 'i').test(lower));
 }
 
-// ── DOMAIN RESTRICTION — Level 2 ────────────────────────────────────────────
-// isGeneralQuestion, generateSmartResponse, and generateSmartFallbackResponse
-// have been REMOVED. They routed any message to an unrestricted Groq prompt
-// which freely answered world questions ("what is trump doing today" etc.).
-//
-// Now all non-property queries are caught by two gates:
-//   Gate 1 — isOffTopicQuestion() above (known off-topic keyword/pattern match)
-//   Gate 2 — hasAnyFilter check below (if Groq extracts zero property filters → reject)
-//
-// Valid property queries that use question words ("what apartments are in DHA?")
-// still work correctly because Groq extracts real filters from them.
+// ═════════════════════════════════════════════════════════════════════════════
+// GROQ INTENT EXTRACTION (THE CORE)
+// ═════════════════════════════════════════════════════════════════════════════
 
-/**
- * Fallback filter extraction using regex patterns (Safety net if AI fails)
- */
-function parseFallbackFilters(text) {
-    const lower = text.toLowerCase();
-    const filters = {
-        location: null, area: null, maxPrice: null, minPrice: null,
-        exactRooms: null, minRooms: null,
-        exactBaths: null, minBaths: null,       // NEW: split into exact vs min
-        propertyType: null, availability: null,
-        exactSqft: null, minSqft: null,         // NEW: split into exact vs min
-        amenities: []                            // NEW
-    };
-
-    for (const loc of availableLocations) {
-        if (new RegExp(`\\b${loc.replace(/\s+/g, '\\s+')}\\b`, 'i').test(lower)) {
-            filters.location = loc; break;
-        }
-    }
-
-    if (/\brent\b|\bkiraya\b/.test(lower)) filters.availability = 'rent';
-    if (/\bbuy\b|\bkharidna\b|\bsell\b/.test(lower)) filters.availability = 'buy';
-    if (/\bflat\b|\bapartment\b|\bapt\b/.test(lower)) filters.propertyType = 'Apartment';
-    if (/\bhouse\b|\bghar\b/.test(lower)) filters.propertyType = 'House';
-    if (/\bvilla\b/.test(lower)) filters.propertyType = 'Villa';
-    if (/\boffice\b/.test(lower)) filters.propertyType = 'Office';
-
-    // FIX: was parseInt(roomsMatch) — missing [1], was parsing full array string
-    const roomsMatch = lower.match(/(\d+)\s*(?:bedroom|room|bed|bhk)/i);
-    if (roomsMatch) {
-        if (/zyada|more|above|plus|\+/.test(lower)) {
-            filters.minRooms = parseInt(roomsMatch[1]) + 1;
-        } else {
-            filters.exactRooms = parseInt(roomsMatch[1]); // FIX: [1] not [0]
-        }
-    }
-
-    // NEW: Bathrooms fallback
-    const bathsMatch = lower.match(/(\d+)\s*(?:bathroom|bath|washroom)/i);
-    if (bathsMatch) {
-        if (/zyada|more|above|plus|\+/.test(lower)) {
-            filters.minBaths = parseInt(bathsMatch[1]) + 1;
-        } else {
-            filters.exactBaths = parseInt(bathsMatch[1]);
-        }
-    }
-
-    // NEW: Sqft fallback
-    const sqftMatch = lower.match(/(\d+)\s*(?:sqft|sq\.?\s*ft|square\s*feet)/i);
-    if (sqftMatch) {
-        if (/zyada|more|above|plus|\+/.test(lower)) {
-            filters.minSqft = parseInt(sqftMatch[1]);
-        } else {
-            filters.exactSqft = parseInt(sqftMatch[1]);
-        }
-    }
-
-    // NEW: Amenities fallback — check each synonym against the message
-    const foundAmenities = [];
-    for (const [canonical, synonyms] of Object.entries(AMENITY_MAP)) {
-        if (synonyms.some(s => lower.includes(s))) {
-            foundAmenities.push(canonical);
-        }
-    }
-    filters.amenities = foundAmenities;
-
-    return filters;
-}
-
-/**
- * Analyze user intent using Groq AI
- */
-async function analyzeUserIntentWithGroq(userMessage) {
-    const fallbackFilters = parseFallbackFilters(userMessage);
-
+async function analyzeUserIntent(userMessage) {
     try {
-        const safeMessage = userMessage.replace(/"/g, "'").replace(/\n/g, ' ').slice(0, 200);
+        const safe = userMessage.replace(/"/g, "'").slice(0, 400);
         const locationSample = availableLocations.slice(0, 8).join(', ');
 
-        // UPDATED: Prompt now includes amenities, exact/min split for baths & sqft
-        const prompt = `You are an intelligent real estate search parser that understands English and Roman Urdu (e.g. "se zyada", "rent ke liye"). Extract filters from this query: "${safeMessage}"
+        const prompt = `You are PropX real estate assistant. Analyze this query and extract structured intent: "${safe}"
 
-Known locations (partial match is fine): ${locationSample}
+Known locations: ${locationSample}
 
-Return ONLY this JSON (no markdown, no extra text):
+Return ONLY valid JSON (no markdown):
 {
+  "queryType": "SEARCH",
+  "language": "english",
   "location": null,
-  "area": null,
-  "maxPrice": null,
-  "minPrice": null,
-  "exactRooms": null,
-  "minRooms": null,
-  "exactBaths": null,
-  "minBaths": null,
   "propertyType": null,
   "availability": null,
+  "exactRooms": null,
+  "minRooms": null,
+  "maxRooms": null,
+  "exactBaths": null,
+  "minBaths": null,
   "exactSqft": null,
   "minSqft": null,
-  "amenities": []
+  "maxSqft": null,
+  "minPrice": null,
+  "maxPrice": null,
+  "amenitiesInclude": [],
+  "amenitiesExclude": [],
+  "sortBy": null,
+  "limit": null
 }
 
 Rules:
-- location: partial name is fine. "emaar" → "emaar". null if not mentioned.
-- area: sub-area like Phase 5 / Block A, or null.
-- exactRooms: INTEGER. Set ONLY when user says "2 bedroom", "2 bed", "2 bhk". Do NOT also set minRooms.
-- minRooms: INTEGER. Set ONLY when user says "more than 2", "2 se zyada", "at least 3", "3+". Do NOT also set exactRooms.
-- exactBaths: INTEGER. Set ONLY for exact count e.g. "2 bathrooms". Do NOT also set minBaths.
-- minBaths: INTEGER. Set ONLY when user says "more than 2 baths", "2 se zyada washroom". Do NOT also set exactBaths.
-- exactSqft: INTEGER. Set ONLY for exact size e.g. "410 sqft". Do NOT also set minSqft.
-- minSqft: INTEGER. Set ONLY when user says "more than 500 sqft", "500 se zyada". Do NOT also set exactSqft.
-- maxPrice: NUMBER in PKR. "50 lakh"=5000000, "1 crore"=10000000, "50M"=50000000. Use for "under X", "below X".
-- minPrice: NUMBER in PKR. Use for "above X", "more than X price".
-- propertyType: exactly "House", "Apartment", "Office", or "Villa". "flat"→"Apartment", "ghar"→"House". null if not mentioned.
-- availability: "rent" or "buy" only. "kiraya"→"rent", "kharidna"→"buy". null if not mentioned.
-- amenities: ARRAY of raw keywords user mentioned e.g. ["pool", "gym", "theater"]. [] if none mentioned.`;
 
-        const message = await groq.chat.completions.create({
+queryType — exactly ONE of:
+  "GREETING" → hi, hello, hey, salam, wassup, bye, goodbye, alvida, khuda hafiz
+  "COUNT" → how many properties, total listings, kitne hain
+  "EXTREME" → most expensive, cheapest, biggest, smallest, sabse mehnga, sabse sasta
+  "SEARCH" → any property search with filters
+  "RECOMMEND" → show me something, suggest me, recommend, kuch dikhao
+  "INFO" → what can you do, how does this work, help
+
+language — detect user's language:
+  "english" | "roman_urdu" | "mixed"
+  Examples: "show me" → english, "dikhao" → roman_urdu, "show me dikhao" → mixed
+
+location: partial name OK. "emaar" → "emaar". null if not mentioned.
+
+propertyType: "House", "Apartment", "Office", or "Villa". "flat"→"Apartment", "ghar"→"House".
+
+availability: "rent" or "buy". "kiraya"→"rent", "kharidna"→"buy".
+
+exactRooms: INTEGER. Use when "2 bedroom" (exact). Do NOT also set minRooms/maxRooms.
+minRooms: INTEGER. Use when "more than 2", "2 se zyada", "at least 3". Do NOT set exactRooms.
+maxRooms: INTEGER. Use when "upto 3 beds", "max 3 rooms". Do NOT set exactRooms.
+
+exactBaths/minBaths: same logic as rooms.
+
+exactSqft/minSqft/maxSqft: same logic.
+
+minPrice/maxPrice: NUMBER in PKR. "50 lakh"=5000000, "1 crore"=10000000, "50M"=50000000.
+
+amenitiesInclude: ARRAY of mentioned amenities e.g. ["pool","gym"].
+amenitiesExclude: ARRAY of excluded amenities. "without parking", "no generator" → ["parking"], ["generator"].
+
+sortBy: ONE of exactly:
+  "price_desc" → most expensive, sabse mehnga, expensive, highest price
+  "price_asc" → cheapest, sabse sasta, sasta, lowest price, affordable, budget friendly
+  "sqft_desc" → biggest, largest, sabse bada, bari jagah, most spacious
+  "sqft_asc" → smallest, sabse chota, choti si
+  "beds_desc" → most rooms, zyada kamre
+  "newest" → latest, newest, recent, naya, new listing
+  "oldest" → oldest, purana
+  null if no sort intent
+
+limit: INTEGER. Extract from "top 5", "first 10", "show me 3". null otherwise (defaults to 10).
+
+IMPORTANT:
+- For EXTREME queryType, ALSO set sortBy and limit=1
+- For COUNT queryType, DO NOT set sortBy
+- For "cheapest 3 bed house in DHA" → queryType=SEARCH, exactRooms=3, location="dha", sortBy="price_asc"
+  (SEARCH type supports filters+sorting combined)
+- "sasti property" → sortBy="price_asc", maxPrice could also be inferred if context suggests budget
+- Negative/invalid values (0 beds, -5 price) → ignore, set null`;
+
+        const response = await groq.chat.completions.create({
             messages: [{ role: 'user', content: prompt }],
             model: 'llama-3.3-70b-versatile',
-            temperature: 0.1,
-            max_completion_tokens: 200,
-            top_p: 1
+            temperature: 0.05,
+            max_completion_tokens: 300,
         });
 
-        // FIX: was message.choices?.message — choices is an array, need [0]
-        let responseText = message.choices[0]?.message?.content || '';
-        responseText = responseText.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        let text = response.choices[0]?.message?.content || '';
+        text = text.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('No JSON in response');
 
-        if (!jsonMatch) throw new Error('No JSON object found in response');
+        const parsed = JSON.parse(match[0]);
 
-        const parsed = JSON.parse(jsonMatch[0]);
-
-        // Sanitize: string "null" / "" / "undefined" → actual null
+        // Sanitize
         Object.keys(parsed).forEach(k => {
             if (parsed[k] === 'null' || parsed[k] === '' || parsed[k] === 'undefined') {
-                parsed[k] = k === 'amenities' ? [] : null;
+                parsed[k] = (k === 'amenitiesInclude' || k === 'amenitiesExclude') ? [] : null;
             }
         });
 
-        // Ensure amenities is always an array
-        if (!Array.isArray(parsed.amenities)) parsed.amenities = [];
+        if (!Array.isArray(parsed.amenitiesInclude)) parsed.amenitiesInclude = [];
+        if (!Array.isArray(parsed.amenitiesExclude)) parsed.amenitiesExclude = [];
 
-        // Type-coerce all numeric fields — prevents string vs number mismatch in MongoDB
-        const numericFields = ['exactRooms','minRooms','exactBaths','minBaths',
-                               'exactSqft','minSqft','minPrice','maxPrice'];
-        numericFields.forEach(f => {
+        // Type coercion
+        const numFields = ['exactRooms','minRooms','maxRooms','exactBaths','minBaths',
+                           'exactSqft','minSqft','maxSqft','minPrice','maxPrice','limit'];
+        numFields.forEach(f => {
             if (parsed[f] !== null && parsed[f] !== undefined) {
                 const n = Number(parsed[f]);
-                parsed[f] = isNaN(n) ? null : n;
+                parsed[f] = (isNaN(n) || n < 0) ? null : n;  // Reject negatives
             }
         });
 
-        // Smart merge: Groq only overrides fallback when it actually found a value
-        const merged = { ...fallbackFilters };
-        Object.keys(parsed).forEach(key => {
-            if (key === 'amenities') {
-                // Merge amenities from both sources (deduplicated + resolved)
-                const combined = [...new Set([
-                    ...fallbackFilters.amenities,
-                    ...parsed.amenities.map(resolveAmenity)
-                ])];
-                merged.amenities = combined;
-            } else if (parsed[key] !== null && parsed[key] !== undefined) {
-                merged[key] = parsed[key];
-            }
-        });
+        // Edge case: 0 bedrooms/baths is valid for studio apartments
+        if (parsed.exactRooms === 0) parsed.exactRooms = 0;  // Allow
 
-        return merged;
+        return parsed;
 
     } catch (err) {
-        console.warn('⚠️ Groq parsing failed, using fallback:', err.message);
-        return fallbackFilters;
+        console.error('⚠️ Groq extraction failed:', err.message);
+        return {
+            queryType: 'SEARCH',
+            language: 'english',
+            location: null, propertyType: null, availability: null,
+            exactRooms: null, minRooms: null, maxRooms: null,
+            exactBaths: null, minBaths: null,
+            exactSqft: null, minSqft: null, maxSqft: null,
+            minPrice: null, maxPrice: null,
+            amenitiesInclude: [], amenitiesExclude: [],
+            sortBy: null, limit: null
+        };
     }
 }
 
-/**
- * Main chat handler
- */
+// ═════════════════════════════════════════════════════════════════════════════
+// QUERY HANDLERS BY TYPE
+// ═════════════════════════════════════════════════════════════════════════════
+
+async function handleGreeting(intent) {
+    const greetings = {
+        english: `👋 Hello! Welcome to PropX! 🏠\n\nI'm your property assistant. Tell me what you're looking for:\n🏡 "2 bedroom house for rent in DHA"\n🏢 "Cheapest apartment in Karachi"\n🌟 "Biggest villa under 5 crore"`,
+        roman_urdu: `👋 Assalamu Alaikum! PropX mein khush amdeed! 🏠\n\nMain aapka property assistant hoon. Batayein kya dhoondh rahe hain:\n🏡 "Rent ke liye 2 bedroom ghar DHA mein"\n🏢 "Karachi mein sabse sasta apartment"\n🌟 "5 crore se kam mein sabse bada villa"`,
+        mixed: `👋 Assalamu Alaikum! Welcome to PropX! 🏠\n\nMain aapka property assistant hoon. Tell me what you're looking for:\n🏡 "2 bedroom house for rent in DHA"\n🏢 "Sabse sasta apartment Karachi mein"\n🌟 "Biggest villa under 5 crore"`
+    };
+    return { success: true, reply: greetings[intent.language] || greetings.mixed };
+}
+
+async function handleCount(intent) {
+    const query = buildSearchQuery(intent);
+    const count = await Property.countDocuments(query);
+    
+    const replies = {
+        english: `📊 I found **${count} properties** matching your criteria.`,
+        roman_urdu: `📊 Aapki criteria ke mutabiq **${count} properties** mili hain.`,
+        mixed: `📊 I found **${count} properties** aapki criteria ke mutabiq.`
+    };
+    
+    return { success: true, reply: replies[intent.language] || replies.mixed, count };
+}
+
+async function handleExtreme(intent) {
+    // EXTREME means: most/least expensive, biggest/smallest with limit=1
+    const query = buildSearchQuery(intent);
+    const sort = buildSort(intent.sortBy || 'price_desc');  // Fallback
+    
+    const result = await Property.findOne(query)
+        .populate('userId', 'name email')
+        .sort(sort)
+        .lean();
+
+    if (!result) {
+        return {
+            success: true,
+            reply: `😔 Koi property nahi mili matching criteria.\n\n📞 Contact: ${CONTACT.phone}`,
+            totalCount: 0
+        };
+    }
+
+    const extremeType = intent.sortBy === 'price_desc' ? 'most expensive' :
+                        intent.sortBy === 'price_asc' ? 'cheapest' :
+                        intent.sortBy === 'sqft_desc' ? 'biggest' : 'smallest';
+
+    return {
+        success: true,
+        reply: `🎯 Here's the ${extremeType} property I found:`,
+        results: [formatProperty(result, 'A')],
+        totalCount: 1
+    };
+}
+
+async function handleRecommend(intent) {
+    // Recommendation: return diverse mix (rent+buy, different types, price ranges)
+    const results = await Property.find({})
+        .populate('userId', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .lean();
+
+    const replies = {
+        english: `💡 Here are some recommended properties for you:`,
+        roman_urdu: `💡 Yahan kuch achhi properties hain aapke liye:`,
+        mixed: `💡 Yahan kuch recommended properties hain for you:`
+    };
+
+    return {
+        success: true,
+        reply: replies[intent.language] || replies.mixed,
+        results: results.map((p, i) => formatProperty(p, String.fromCharCode(65 + i))),
+        totalCount: results.length
+    };
+}
+
+async function handleSearch(intent) {
+    const query = buildSearchQuery(intent);
+    const sort = buildSort(intent.sortBy);
+    const limit = intent.limit || 10;
+
+    const results = await Property.find(query)
+        .populate('userId', 'name email')
+        .sort(sort)
+        .limit(limit)
+        .lean();
+
+    if (results.length === 0) {
+        // Fallback: try relaxed search
+        const relaxedQuery = buildRelaxedQuery(intent);
+        const relaxedResults = await Property.find(relaxedQuery)
+            .populate('userId', 'name email')
+            .sort(sort)
+            .limit(5)
+            .lean();
+
+        if (relaxedResults.length === 0) {
+            return {
+                success: true,
+                reply: `😔 Koi property nahi mili.\n\n📞 Contact: ${CONTACT.phone}\n📧 ${CONTACT.email}`,
+                totalCount: 0,
+                adminContact: CONTACT
+            };
+        }
+
+        return {
+            success: true,
+            reply: `🔍 Exact match nahi mila, but yahan similar properties hain:`,
+            results: relaxedResults.map((p, i) => formatProperty(p, String.fromCharCode(65 + i))),
+            totalCount: relaxedResults.length,
+            alternativeSearch: true
+        };
+    }
+
+    const sortLabel = intent.sortBy === 'price_asc' ? ' (sorted by price low to high)' :
+                      intent.sortBy === 'price_desc' ? ' (sorted by price high to low)' :
+                      intent.sortBy === 'sqft_desc' ? ' (sorted by size largest first)' :
+                      intent.sortBy === 'newest' ? ' (newest listings first)' : '';
+
+    return {
+        success: true,
+        reply: `🎉 ${results.length} properties found${sortLabel}!\n\n💚 Click "View Full Details" for more info!`,
+        results: results.map((p, i) => formatProperty(p, String.fromCharCode(65 + i))),
+        totalCount: results.length
+    };
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// QUERY BUILDERS
+// ═════════════════════════════════════════════════════════════════════════════
+
+function buildSearchQuery(intent) {
+    const query = {};
+    const andConditions = [];
+
+    // Location (searches both location AND title fields)
+    if (intent.location) {
+        const patterns = buildLocationPatterns(intent.location);
+        if (patterns.length > 0) {
+            // Each pattern is {$or: [{location: ...}, {title: ...}]}
+            // Wrap all in $or
+            query.$or = patterns.flatMap(p => p.$or);
+        }
+    }
+
+    // Property type
+    if (intent.propertyType) {
+        query.type = { $regex: `^${intent.propertyType}$`, $options: 'i' };
+    }
+
+    // Availability
+    if (intent.availability) {
+        query.availability = { $regex: `^${intent.availability}$`, $options: 'i' };
+    }
+
+    // Bedrooms
+    if (intent.exactRooms !== null && intent.exactRooms !== undefined) {
+        query.beds = intent.exactRooms;  // Exact (supports 0 for studio)
+    } else if (intent.minRooms !== null && intent.maxRooms !== null) {
+        query.beds = { $gte: intent.minRooms, $lte: intent.maxRooms };
+    } else if (intent.minRooms !== null) {
+        query.beds = { $gte: intent.minRooms };
+    } else if (intent.maxRooms !== null) {
+        query.beds = { $lte: intent.maxRooms };
+    }
+
+    // Bathrooms
+    if (intent.exactBaths !== null) {
+        query.baths = intent.exactBaths;
+    } else if (intent.minBaths !== null) {
+        query.baths = { $gte: intent.minBaths };
+    }
+
+    // Square feet
+    if (intent.exactSqft !== null) {
+        const tolerance = Math.round(intent.exactSqft * 0.10);
+        query.sqft = { $gte: intent.exactSqft - tolerance, $lte: intent.exactSqft + tolerance };
+    } else if (intent.minSqft !== null && intent.maxSqft !== null) {
+        query.sqft = { $gte: intent.minSqft, $lte: intent.maxSqft };
+    } else if (intent.minSqft !== null) {
+        query.sqft = { $gte: intent.minSqft };
+    } else if (intent.maxSqft !== null) {
+        query.sqft = { $lte: intent.maxSqft };
+    }
+
+    // Price
+    if (intent.minPrice !== null && intent.maxPrice !== null) {
+        query.price = { $gte: intent.minPrice, $lte: intent.maxPrice };
+    } else if (intent.maxPrice !== null) {
+        query.price = { $lte: intent.maxPrice };
+    } else if (intent.minPrice !== null) {
+        query.price = { $gte: intent.minPrice };
+    }
+
+    // Amenities include (AND logic — must have ALL)
+    if (intent.amenitiesInclude && intent.amenitiesInclude.length > 0) {
+        const resolved = [...new Set(intent.amenitiesInclude.map(resolveAmenity))];
+        resolved.forEach(a => {
+            andConditions.push({ amenities: { $elemMatch: { $regex: a, $options: 'i' } } });
+        });
+    }
+
+    // Amenities exclude (AND logic — must NOT have ANY)
+    if (intent.amenitiesExclude && intent.amenitiesExclude.length > 0) {
+        const resolved = [...new Set(intent.amenitiesExclude.map(resolveAmenity))];
+        resolved.forEach(a => {
+            andConditions.push({ amenities: { $not: { $elemMatch: { $regex: a, $options: 'i' } } } });
+        });
+    }
+
+    if (andConditions.length > 0) {
+        query.$and = andConditions;
+    }
+
+    return query;
+}
+
+function buildRelaxedQuery(intent) {
+    // Relaxed: only location + type + availability
+    const query = {};
+    if (intent.location) {
+        const patterns = buildLocationPatterns(intent.location);
+        if (patterns.length > 0) query.$or = patterns.flatMap(p => p.$or);
+    }
+    if (intent.propertyType) query.type = { $regex: intent.propertyType, $options: 'i' };
+    if (intent.availability) query.availability = { $regex: intent.availability, $options: 'i' };
+    return query;
+}
+
+function buildSort(sortBy) {
+    const sortMap = {
+        'price_desc': { price: -1 },
+        'price_asc':  { price: 1 },
+        'sqft_desc':  { sqft: -1 },
+        'sqft_asc':   { sqft: 1 },
+        'beds_desc':  { beds: -1 },
+        'newest':     { createdAt: -1 },
+        'oldest':     { createdAt: 1 },
+    };
+    return sortMap[sortBy] || { createdAt: -1 };  // Default: newest first
+}
+
+function formatProperty(prop, option) {
+    return {
+        _id: prop._id,
+        option,
+        title: prop.title,
+        type: prop.type,
+        availability: prop.availability,
+        price: prop.price,
+        beds: prop.beds,
+        baths: prop.baths,
+        sqft: prop.sqft,
+        location: prop.location,
+        amenities: prop.amenities,
+        image: prop.image,
+        description: prop.description,
+        phone: prop.phone,
+    };
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MAIN CHAT HANDLER
+// ═════════════════════════════════════════════════════════════════════════════
+
 export const chat = async (req, res) => {
     try {
         const { message, selectedPropertyId } = req.body || {};
 
-        // 1. Sabse pehle Detailed View check karo (Taake Server 500 Error na de)
+        // Detail view
         if (selectedPropertyId) {
-            try {
-                const property = await Property.findById(selectedPropertyId).populate('userId', 'name email').lean();
-                if (property) {
-                    return res.json({
-                        success: true,
-                        reply: `📍 Here are the complete details for ${property.title}:`,
-                        selectedProperty: property,
-                        isDetailedView: true
-                    });
-                }
-            } catch (err) {
-                return res.status(400).json({ success: false, error: 'Property not found' });
+            const property = await Property.findById(selectedPropertyId)
+                .populate('userId', 'name email')
+                .lean();
+            if (!property) {
+                return res.status(404).json({ success: false, error: 'Property not found' });
             }
+            return res.json({
+                success: true,
+                reply: `📍 Here are the complete details for ${property.title}:`,
+                selectedProperty: property,
+                isDetailedView: true
+            });
         }
 
-        // 2. Agar View Details click nahi hua, tab zaroori hai ke user ka message ho
-        if (!message) {
+        if (!message || !message.trim()) {
             return res.status(400).json({ success: false, error: 'Message is required' });
         }
 
         const text = message.trim();
 
-        // Load available locations
+        // Load locations
         try {
-            const distinctLocations = await Property.distinct('location');
-            availableLocations = distinctLocations.filter(loc => loc && loc.trim() !== '').map(loc => loc.toLowerCase());
+            const locations = await Property.distinct('location');
+            availableLocations = locations.filter(loc => loc && loc.trim()).map(loc => loc.toLowerCase());
         } catch (err) {
             console.error('Error loading locations:', err.message);
         }
 
-        // Greeting detection
-        if (/\b(hy|hai|hey|hi|hello|hey|assalam|salam|start|begin|kmk|suno|bhai|ji|acha)\b/i.test(text)) {
-            return res.json({
-                success: true,
-                reply: `👋 Assalamu Alaikum! Welcome to PropX! 🏠\n\nI'm your friendly property assistant. Tell me what you're looking for:\n🏡 "Rent ke liye Apartment"\n🏢 "3 beds se zyada wala ghar"\n🌟 "DHA mein property under 50M"`
-            });
-        }
-
-        // Off-topic and General Qs
+        // Off-topic check
         if (isOffTopicQuestion(text)) {
             return res.json({
                 success: true,
-                reply: `😊 Sorry! I'm a real estate assistant and I only help with property-related queries. 🏠\n\n💡 Try asking:\n• "Rent ke liye ghar"\n• "3 bedroom flat"\n• "Properties in Bahria Town"`,
+                reply: `😊 Sorry! I'm a real estate assistant and I only help with property-related queries. 🏠\n\n💡 Try asking:\n• "Rent ke liye ghar"\n• "3 bedroom flat"\n• "Sabse sasta apartment"`,
                 isGeneralResponse: true
             });
         }
 
-        // Analyze Intent
-        const analyzedFilters = await analyzeUserIntentWithGroq(text);
+        // Intent extraction
+        const intent = await analyzeUserIntent(text);
 
-        // Check if ANY filter is applied — UPDATED to include new fields
-        const hasAnyFilter = analyzedFilters.location || analyzedFilters.area ||
-                             analyzedFilters.maxPrice || analyzedFilters.minPrice ||
-                             analyzedFilters.exactRooms || analyzedFilters.minRooms ||
-                             analyzedFilters.exactBaths || analyzedFilters.minBaths ||
-                             analyzedFilters.exactSqft || analyzedFilters.minSqft ||
-                             analyzedFilters.propertyType || analyzedFilters.availability ||
-                             (analyzedFilters.amenities && analyzedFilters.amenities.length > 0);
-
-        if (!hasAnyFilter) {
-            return res.json({
-                success: true,
-                reply: `🤔 Main samajh nahi paya. Aap kis tarah ki property dhoondh rahe hain?\n\n💡 Try karein: "Rent ke liye Apartment", "3 bedroom house", ya "DHA mein property"`
-            });
+        // Route by query type
+        let response;
+        switch (intent.queryType) {
+            case 'GREETING':
+                response = await handleGreeting(intent);
+                break;
+            case 'COUNT':
+                response = await handleCount(intent);
+                break;
+            case 'EXTREME':
+                response = await handleExtreme(intent);
+                break;
+            case 'RECOMMEND':
+                response = await handleRecommend(intent);
+                break;
+            case 'INFO':
+                response = {
+                    success: true,
+                    reply: `🤝 I can help you find properties! Just tell me:\n\n📍 **Location** — "in DHA", "Emaar", "Bahria Town"\n🏠 **Type** — House, Apartment, Office, Villa\n💰 **Budget** — "under 50 lakh", "1 crore se zyada"\n🛏️ **Bedrooms** — "2 bedroom", "3 se zyada beds"\n🚿 **Bathrooms** — "2 bathrooms"\n📐 **Size** — "500 sqft", "bari jagah wali"\n🏊 **Amenities** — "with pool", "gym aur parking"\n💎 **Sort** — "cheapest", "biggest", "newest"\n\n📞 Need help? WhatsApp: **${CONTACT.phone}**`
+                };
+                break;
+            default:  // SEARCH
+                response = await handleSearch(intent);
+                break;
         }
 
-        // Build Smart DB Query
-        const query = {};
-
-        // UPDATED: All location variants fed into $or so "luckyone" matches "lucky one" and vice versa
-        if (analyzedFilters.location) {
-            query.$or = buildLocationPatterns(analyzedFilters.location);
-        } else if (analyzedFilters.area) {
-            query.$or = buildLocationPatterns(analyzedFilters.area);
-        }
-
-        if (analyzedFilters.maxPrice && analyzedFilters.minPrice) {
-            query.price = { $gte: analyzedFilters.minPrice, $lte: analyzedFilters.maxPrice };
-        } else if (analyzedFilters.maxPrice) {
-            query.price = { $lte: analyzedFilters.maxPrice };
-        } else if (analyzedFilters.minPrice) {
-            query.price = { $gte: analyzedFilters.minPrice };
-        }
-
-        // UPDATED: exactRooms = strict integer match, minRooms = $gte
-        if (analyzedFilters.exactRooms !== null && analyzedFilters.exactRooms !== undefined) {
-            query.beds = analyzedFilters.exactRooms;
-        } else if (analyzedFilters.minRooms !== null && analyzedFilters.minRooms !== undefined) {
-            query.beds = { $gte: analyzedFilters.minRooms };
-        }
-
-        // UPDATED: Bathrooms now support exact vs min (was always $gte before)
-        if (analyzedFilters.exactBaths !== null && analyzedFilters.exactBaths !== undefined) {
-            query.baths = analyzedFilters.exactBaths;
-        } else if (analyzedFilters.minBaths !== null && analyzedFilters.minBaths !== undefined) {
-            query.baths = { $gte: analyzedFilters.minBaths };
-        }
-
-        // UPDATED: exactSqft uses ±10% tolerance range, minSqft uses $gte
-        if (analyzedFilters.exactSqft !== null && analyzedFilters.exactSqft !== undefined) {
-            const tolerance = Math.round(analyzedFilters.exactSqft * 0.10);
-            query.sqft = {
-                $gte: analyzedFilters.exactSqft - tolerance,
-                $lte: analyzedFilters.exactSqft + tolerance
-            };
-        } else if (analyzedFilters.minSqft !== null && analyzedFilters.minSqft !== undefined) {
-            query.sqft = { $gte: analyzedFilters.minSqft };
-        }
-
-        if (analyzedFilters.propertyType && analyzedFilters.propertyType !== 'null') {
-            query.type = { $regex: analyzedFilters.propertyType, $options: 'i' };
-        }
-        if (analyzedFilters.availability && analyzedFilters.availability !== 'null') {
-            query.availability = { $regex: analyzedFilters.availability, $options: 'i' };
-        }
-
-        // NEW: Amenities — resolve synonyms then require ALL of them (AND logic)
-        if (analyzedFilters.amenities && analyzedFilters.amenities.length > 0) {
-            const resolved = [...new Set(analyzedFilters.amenities.map(resolveAmenity))];
-            query.$or = resolved.map(amenity => ({
-                amenities: { $elemMatch: { $regex: amenity, $options: 'i' } }
-            }));
-        }
-
-        // Execute Search
-        const results = await Property.find(query)
-            .populate('userId', 'name email')
-            .sort({ createdAt: -1 })
-            .limit(10)
-            .lean();
-
-        // If no results, try broader alternative search
-        if (!results || results.length === 0) {
-            const alternativeQuery = {};
-
-            // UPDATED: Same multi-variant matching in fallback search
-            if (analyzedFilters.location) {
-                alternativeQuery.$or = buildLocationPatterns(analyzedFilters.location);
-            }
-            if (analyzedFilters.availability) alternativeQuery.availability = { $regex: analyzedFilters.availability, $options: 'i' };
-            if (analyzedFilters.propertyType) alternativeQuery.type = { $regex: analyzedFilters.propertyType, $options: 'i' };
-
-            const alternativeResults = Object.keys(alternativeQuery).length > 0 ?
-                await Property.find(alternativeQuery).populate('userId', 'name email').sort({ createdAt: -1 }).limit(5).lean() : [];
-
-            let reply = `🏠 Hmm, aapki exact requirement ke hisaab se mujhe koi property nahi mili.\n\n`;
-
-            if (alternativeResults.length > 0) {
-                reply += `✨ Lekin mujhe is se milti julti ${alternativeResults.length} properties mili hain! Kya aap inhe dekhna chahenge? 👀\n\n`;
-
-                const altOptions = ['A', 'B', 'C', 'D', 'E'];
-                const altProps = alternativeResults.map((prop, idx) => ({
-                    _id: prop._id, option: altOptions[idx], title: prop.title, price: prop.price,
-                    beds: prop.beds, baths: prop.baths, sqft: prop.sqft,
-                    type: prop.type, image: prop.image, description: prop.description, phone: prop.phone
-                }));
-
-                return res.json({
-                    success: true, reply: reply, results: altProps, totalCount: altProps.length,
-                    alternativeSearch: true, searchFilters: analyzedFilters
-                });
-            }
-
-            reply += `📞 Get personalized help from our experts:\n📱 WhatsApp: +92 (021) 567-567\n📧 Email: support@propertia.com\n\nHamari team aapki madad ke liye hamesha tayar hai! 😊✨`;
-
-            return res.json({
-                success: true, reply: reply, totalCount: 0, hasExactMatch: false,
-                adminContact: { email: 'support@propertia.com', phone: '+92 (021) 567-567' }
-            });
-        }
-
-        // Format exact results
-        const options = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-        const displayResults = results.slice(0, 10).map((prop, idx) => ({
-            _id: prop._id, option: options[idx], title: prop.title, price: prop.price,
-            beds: prop.beds, baths: prop.baths, sqft: prop.sqft,
-            type: prop.type, image: prop.image, description: prop.description,
-            phone: prop.phone, amenities: prop.amenities  // NEW: amenities included in response
-        }));
-
-        const aiResponse = `🎉 Zabardast! Mujhe aapki requirement ke mutabiq ${results.length} properties mili hain! Ye rahe options:\n\n💚 Click "View Full Details" to see more information!`;
-
-        return res.json({
-            success: true, reply: aiResponse, results: displayResults, totalCount: results.length
-        });
+        return res.json(response);
 
     } catch (err) {
-        console.error('Chatbot error:', err);
+        console.error('❌ Chatbot error:', err);
         return res.status(500).json({ success: false, error: 'Internal error: ' + err.message });
     }
 };
-
