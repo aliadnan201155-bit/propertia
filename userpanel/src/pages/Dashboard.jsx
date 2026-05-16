@@ -220,26 +220,23 @@ const Dashboard = () => {
   }, [isAdmin]);
 
   const adminStatusDistribution = {
-    labels: ["Pending", "Confirmed", "Completed", "Cancelled"],
+    labels: ["Pending", "Confirmed", "Cancelled"],
     datasets: [
       {
         label: "Appointments by Status",
         data: [
           stats.pendingAppointments || 0,
           stats.confirmedAppointments || 0,
-          stats.completedAppointments || 0,
           stats.cancelledAppointments || 0,
         ],
         backgroundColor: [
           "rgba(251, 191, 36, 0.8)",
           "rgba(59, 130, 246, 0.8)",
-          "rgba(16, 185, 129, 0.8)",
           "rgba(239, 68, 68, 0.8)",
         ],
         borderColor: [
           "rgba(251, 191, 36, 1)",
           "rgba(59, 130, 246, 1)",
-          "rgba(16, 185, 129, 1)",
           "rgba(239, 68, 68, 1)",
         ],
         borderWidth: 2,
@@ -738,17 +735,17 @@ const Dashboard = () => {
               </div>
 
               {/* Appointment Conversion */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-600">
-                    {isAdmin ? "Completed Appointments" : "Pending Appointments"}
+                    {isAdmin ? "Cancelled Appointments" : "Pending Appointments"}
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {isAdmin ? stats.completedAppointments : stats.pendingAppointments}
+                    {isAdmin ? stats.cancelledAppointments : stats.pendingAppointments}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-red-600" />
                 </div>
               </div>
             </div>

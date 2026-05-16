@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
-import { UserPlus, Trash2, Shield, User, Search, RefreshCw, Edit3, Save, X } from "lucide-react";
+import { UserPlus, Trash2, Shield, User, Search, RefreshCw, Edit3, Save, X, Download } from "lucide-react";
 import { backendurl } from "../config/constants";
 
 const UsersManagement = () => {
@@ -168,6 +168,36 @@ const UsersManagement = () => {
     }
   };
 
+  const handleExport = () => {
+    const rows = users.map((user) => ({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "",
+      status: user.isActive ? "Active" : "Inactive",
+    }));
+
+    const headers = Object.keys(rows[0] || {});
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header] ?? "").replace(/"/g, '""')}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `users_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    toast.success("Users exported successfully");
+  };
+
   const handleDelete = async (targetUser) => {
     if (!window.confirm(`Delete user ${targetUser.email}?`)) return;
 
@@ -242,6 +272,13 @@ const UsersManagement = () => {
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
+            </button>
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export
             </button>
           </div>
         </div>

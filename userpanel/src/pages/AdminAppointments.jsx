@@ -50,7 +50,9 @@ const AdminAppointments = () => {
       });
 
       if (response.data.success) {
-        setAppointments(response.data.appointments || []);
+        setAppointments(
+          (response.data.appointments || []).filter((apt) => apt.status !== 'completed')
+        );
         setPagination({
           total: response.data.pagination?.total || 0,
           pages: response.data.pagination?.pages || 1,
@@ -250,7 +252,6 @@ const AdminAppointments = () => {
               <option value="all">All</option>
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
-              <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
 
@@ -431,7 +432,6 @@ const AdminAppointments = () => {
                   >
                     <option value="pending">Pending</option>
                     <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
