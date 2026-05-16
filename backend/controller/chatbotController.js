@@ -587,4 +587,4 @@ export const chat = async (req, res) => {
         console.error('❌ Chatbot error:', err);
         return res.status(500).json({ success: false, error: 'Internal error: ' + err.message });
     }
-};
+};  

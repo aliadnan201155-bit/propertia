@@ -351,7 +351,6 @@ const companyLinks = [
   { name: 'Properties', href: '/properties', icon: MapPin },
   { name: 'About Us', href: '/about', icon: Star },
   { name: 'Contact', href: '/contact', icon: Mail },  
-  { name: 'AI Property Hub [coming soon]', icon: Zap },
 ];
 
 const helpLinks = [

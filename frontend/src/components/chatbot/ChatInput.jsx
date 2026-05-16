@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const ChatInput = ({ onSendMessage, disabled }) => {
   const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!disabled) {
+      inputRef.current?.focus();
+    }
+  }, [disabled]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -26,6 +33,7 @@ const ChatInput = ({ onSendMessage, disabled }) => {
     >
       <div className="flex gap-2">
         <input
+          ref={inputRef}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
