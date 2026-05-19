@@ -334,7 +334,7 @@ const PropertyListings = ({ adminMode = false }) => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div className="space-y-2">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent pb-4">
-                {isAdmin ? "Admin Property Management" : "Property Management"}
+                {isAdmin ? "Property Management" : "Property Management"}
               </h1>
               <div className="flex items-center gap-4 text-sm text-gray-600 ">
                 <div className="flex items-center gap-2">

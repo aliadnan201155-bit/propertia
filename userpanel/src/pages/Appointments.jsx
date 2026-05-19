@@ -67,14 +67,14 @@ const Appointments = () => {
       );
 
       if (response.data.success) {
-        toast.success(`Appointment ${newStatus} successfully`);
+        toast.success(`Property Visit ${newStatus} successfully`);
         fetchAppointments();
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error updating appointment:", error);
-      toast.error("Failed to update appointment status");
+      toast.error("Failed to update property visit status");
     }
   };
 
@@ -150,15 +150,15 @@ const Appointments = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `appointments_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `property_visits_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-      toast.success('Appointments exported successfully');
+      toast.success('Property Visits exported successfully');
     } catch (error) {
       console.error('Error exporting appointments:', error);
-      toast.error('Failed to export appointments');
+      toast.error('Failed to export property visits');
     }
   };
 
@@ -177,7 +177,7 @@ const Appointments = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              Appointments
+              Property Visits
             </h1>
             <p className="text-gray-600">
               Manage and track property viewing appointments

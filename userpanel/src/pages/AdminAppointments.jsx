@@ -124,20 +124,20 @@ const AdminAppointments = () => {
       });
 
       if (response.data.success) {
-        toast.success("Appointment updated");
+        toast.success("Property Visit updated");
         cancelEdit();
         fetchAppointments();
       } else {
-        toast.error(response.data.message || "Failed to update appointment");
+        toast.error(response.data.message || "Failed to update property visit");
       }
     } catch (error) {
       console.error("Error updating appointment:", error);
-      toast.error(error.response?.data?.message || "Failed to update appointment");
+      toast.error(error.response?.data?.message || "Failed to update property visit");
     }
   };
 
   const deleteAppointment = async (id) => {
-    const ok = window.confirm("Delete this appointment?");
+    const ok = window.confirm("Delete this property visit?");
     if (!ok) return;
 
     try {
@@ -147,14 +147,14 @@ const AdminAppointments = () => {
       });
 
       if (response.data.success) {
-        toast.success("Appointment deleted");
+        toast.success("Property Visit deleted");
         fetchAppointments();
       } else {
-        toast.error(response.data.message || "Failed to delete appointment");
+        toast.error(response.data.message || "Failed to delete property visit");
       }
     } catch (error) {
       console.error("Error deleting appointment:", error);
-      toast.error(error.response?.data?.message || "Failed to delete appointment");
+      toast.error(error.response?.data?.message || "Failed to delete property visit");
     }
   };
 
@@ -204,12 +204,12 @@ const AdminAppointments = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `admin_appointments_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `admin_property_visits_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
-    toast.success("Appointments exported");
+    toast.success("Property Visits exported");
   };
 
   if (loading) {
@@ -225,8 +225,8 @@ const AdminAppointments = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Appointments Management</h1>
-            <p className="text-gray-600 mt-1">View both client and property owner, edit and delete appointments</p>
+            <h1 className="text-3xl font-bold text-gray-900">Property Visits Management</h1>
+            <p className="text-gray-600 mt-1">View both client and property owner, edit and delete property visits</p>
           </div>
 
           <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -337,7 +337,7 @@ const AdminAppointments = () => {
                 })}
                 {filteredAppointments.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center py-10 text-gray-500">No appointments found</td>
+                    <td colSpan={7} className="text-center py-10 text-gray-500">No property visits found</td>
                   </tr>
                 )}
               </tbody>
@@ -409,7 +409,7 @@ const AdminAppointments = () => {
             >
               <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Edit Appointment</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Edit Property Visit</h2>
                   <p className="text-sm text-gray-500">
                     {editingAppointment?.propertyId?.title || "Property"} - {editingAppointment?.userId?.name || "Client"}
                   </p>
