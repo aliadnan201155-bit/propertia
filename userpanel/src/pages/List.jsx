@@ -38,6 +38,7 @@ const PropertyListings = ({ adminMode = false }) => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid"); // grid or list
@@ -46,10 +47,19 @@ const PropertyListings = ({ adminMode = false }) => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(9);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [overviewStats, setOverviewStats] = useState({
+    totalProperties: 0,
+    rentProperties: 0,
+    buyProperties: 0,
+    averagePrice: 0,
+  });
 
   const fetchProperties = async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedOnce) {
+        setLoading(true);
+      }
       const token = localStorage.getItem('token');
       const endpoint = isAdmin ? `${backendurl}/api/products/manage` : `${backendurl}/api/products/list`;
       const response = await axios.get(endpoint, {
@@ -57,7 +67,7 @@ const PropertyListings = ({ adminMode = false }) => {
           ? {
               page,
               limit,
-              search: searchTerm || undefined,
+              search: appliedSearch || undefined,
             }
           : undefined,
         headers: {
@@ -76,6 +86,12 @@ const PropertyListings = ({ adminMode = false }) => {
             total: response.data.pagination?.total || 0,
             pages: response.data.pagination?.pages || 1,
           });
+          setOverviewStats({
+            totalProperties: response.data.stats?.totalProperties ?? response.data.pagination?.total ?? 0,
+            rentProperties: response.data.stats?.rentProperties || 0,
+            buyProperties: response.data.stats?.buyProperties || 0,
+            averagePrice: response.data.stats?.averagePrice || 0,
+          });
         }
       } else {
         toast.error(response.data.error);
@@ -84,6 +100,9 @@ const PropertyListings = ({ adminMode = false }) => {
       console.error("Error fetching properties:", error);
       toast.error("Failed to fetch properties");
     } finally {
+      if (!hasLoadedOnce) {
+        setHasLoadedOnce(true);
+      }
       setLoading(false);
     }
   };
@@ -93,6 +112,12 @@ const PropertyListings = ({ adminMode = false }) => {
     await fetchProperties();
     setRefreshing(false);
     toast.success("Properties refreshed!");
+  };
+
+  const handleSearch = () => {
+    if (!isAdmin) return;
+    setPage(1);
+    setAppliedSearch(searchTerm.trim());
   };
 
   const parseAmenities = (amenities) => {
@@ -119,7 +144,7 @@ const PropertyListings = ({ adminMode = false }) => {
     if (isAdmin) {
       fetchProperties();
     }
-  }, [isAdmin, page, limit, searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAdmin, page, limit, appliedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isAdmin) {
@@ -214,9 +239,9 @@ const PropertyListings = ({ adminMode = false }) => {
 
   const filteredProperties = properties
     .filter(property => {
-      const matchesSearch = !searchTerm || 
+      const matchesSearch = !appliedSearch || 
         [property.title, property.location, property.type]
-          .some(field => field.toLowerCase().includes(searchTerm.toLowerCase()));
+          .some(field => field.toLowerCase().includes(appliedSearch.toLowerCase()));
       
       const matchesType = filterType === "all" || property.type.toLowerCase() === filterType.toLowerCase();
       
@@ -269,6 +294,8 @@ const PropertyListings = ({ adminMode = false }) => {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 }
   };
+
+  const totalPropertiesCount = isAdmin ? pagination.total : properties.length;
 
   const cardVariants = {
     hidden: { opacity: 0, scale: 0.95 },
@@ -339,7 +366,7 @@ const PropertyListings = ({ adminMode = false }) => {
               <div className="flex items-center gap-4 text-sm text-gray-600 ">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>{filteredProperties.length} Properties Listed</span>
+                  <span>{totalPropertiesCount} Properties Listed</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
@@ -396,7 +423,7 @@ const PropertyListings = ({ adminMode = false }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Properties</p>
-                <p className="text-2xl font-bold text-gray-900">{properties.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{isAdmin ? overviewStats.totalProperties : properties.length}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl">
                 <Home className="w-6 h-6 text-blue-600" />
@@ -409,7 +436,7 @@ const PropertyListings = ({ adminMode = false }) => {
               <div>
                 <p className="text-sm font-medium text-gray-600">For Rent</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {properties.filter(p => p.availability === 'rent').length}
+                  {isAdmin ? overviewStats.rentProperties : properties.filter(p => p.availability === 'rent').length}
                 </p>
               </div>
               <div className="p-3 bg-green-50 rounded-xl">
@@ -421,9 +448,9 @@ const PropertyListings = ({ adminMode = false }) => {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">For Sale</p>
+                <p className="text-sm font-medium text-gray-600">For Buy</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {properties.filter(p => p.availability === 'sale').length}
+                  {isAdmin ? overviewStats.buyProperties : properties.filter(p => p.availability === 'buy').length}
                 </p>
               </div>
               <div className="p-3 bg-purple-50 rounded-xl">
@@ -437,7 +464,7 @@ const PropertyListings = ({ adminMode = false }) => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg. Price</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  Rs {properties.length > 0 ? Math.round(properties.reduce((sum, p) => sum + p.price, 0) / properties.length / 100000) : 0}L
+                  Rs {(isAdmin ? overviewStats.averagePrice : (properties.length > 0 ? properties.reduce((sum, p) => sum + p.price, 0) / properties.length : 0)) > 0 ? Math.round((isAdmin ? overviewStats.averagePrice : (properties.length > 0 ? properties.reduce((sum, p) => sum + p.price, 0) / properties.length : 0)) / 100000) : 0}L
                 </p>
               </div>
               <div className="p-3 bg-orange-50 rounded-xl">
@@ -456,20 +483,33 @@ const PropertyListings = ({ adminMode = false }) => {
         >
           <div className="space-y-4">
             {/* Search Bar */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+            <div className="flex flex-col lg:flex-row gap-3">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search by title, location, or property type..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearch();
+                    }
+                  }}
+                  className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Search by title, location, or property type..."
-                value={searchTerm}
-                onChange={(e) => {
-                  if (isAdmin) setPage(1);
-                  setSearchTerm(e.target.value);
-                }}
-                className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              />
+
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="inline-flex items-center justify-center px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                Search
+              </button>
             </div>
 
             {/* Filters Row */}
@@ -553,12 +593,12 @@ const PropertyListings = ({ adminMode = false }) => {
                   No properties found
                 </h3>
                 <p className="text-gray-500 mb-6">
-                  {searchTerm || filterType !== "all" 
+                  {appliedSearch || filterType !== "all" 
                     ? "Try adjusting your search criteria or filters" 
                     : "Get started by adding your first property"
                   }
                 </p>
-                {(!searchTerm && filterType === "all") && (
+                {(!appliedSearch && filterType === "all") && (
                   <Link to={addPropertyPath}>
                     <motion.button
                       whileHover={{ scale: 1.05 }}

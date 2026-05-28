@@ -294,18 +294,41 @@ const adminListProperties = async (req, res) => {
         }
       : {};
 
-    const [properties, total] = await Promise.all([
+    const [properties, total, overallStats] = await Promise.all([
       Property.find(filter)
         .populate("userId", "name email role")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
       Property.countDocuments(filter),
+      Property.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalProperties: { $sum: 1 },
+            rentProperties: {
+              $sum: { $cond: [{ $eq: ["$availability", "rent"] }, 1, 0] },
+            },
+            buyProperties: {
+              $sum: { $cond: [{ $eq: ["$availability", "buy"] }, 1, 0] },
+            },
+            averagePrice: { $avg: "$price" },
+          },
+        },
+      ]),
     ]);
+
+    const stats = overallStats?.[0] || {
+      totalProperties: 0,
+      rentProperties: 0,
+      buyProperties: 0,
+      averagePrice: 0,
+    };
 
     return res.json({
       success: true,
       properties,
+      stats,
       pagination: {
         total,
         page,

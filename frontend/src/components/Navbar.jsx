@@ -19,6 +19,7 @@ import {
   Zap,
   Crown,
   PlusCircle,
+  LayoutDashboard 
 } from "lucide-react";
 import logo from "../assets/home-regular-24.png";
 import { useAuth } from "../context/AuthContext";
@@ -94,7 +95,8 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const { isLoggedIn, user, logout } = useAuth();
   const adminBaseUrl = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";
-  const addPropertyPath = user?.role === "admin" ? "/admin/dashboard" : "/owner/add";
+  // const addPropertyPath = user?.role === "admin" ? "/admin/dashboard" : "/owner/add";
+  const addPropertyPath = user?.role === "admin" ? "/admin/dashboard" : "/owner/dashboard";
   const location = useLocation();
 
   // Handle click outside of dropdown
@@ -207,8 +209,8 @@ const Navbar = () => {
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl shadow-green-500/30 font-semibold"
               >
-                <PlusCircle className="w-5 h-5" />
-                <span>Add Property</span>
+                <LayoutDashboard className="w-5 h-5" />
+                <span>Dashboard</span>
               </motion.a>
             )}
 
@@ -767,7 +769,7 @@ const MobileNavLinks = ({
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="p-2 rounded-lg bg-white/20">
-              <PlusCircle className="w-6 h-6" />
+              <LayoutDashboard className="w-6 h-6" />
             </div>
             <div className="flex-1">
               <div className="font-bold text-lg">Add Property</div>

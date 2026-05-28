@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
-import { UserPlus, Trash2, Shield, User, Search, RefreshCw, Edit3, Save, X, Download } from "lucide-react";
+import { UserPlus, Trash2, Shield, User, Users, UserCheck, UserX, Search, RefreshCw, Edit3, Save, X, Download } from "lucide-react";
 import { backendurl } from "../config/constants";
 
 const UsersManagement = () => {
@@ -237,6 +237,45 @@ const UsersManagement = () => {
     return pages;
   };
 
+  const summaryCards = [
+    {
+      title: "Total Users",
+      value: pagination.total,
+      icon: Users,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      borderColor: "border-blue-100",
+      description: "All registered platform users",
+    },
+    {
+      title: "Active on Page",
+      value: users.filter((item) => item.isActive).length,
+      icon: UserCheck,
+      iconBg: "bg-green-50",
+      iconColor: "text-green-600",
+      borderColor: "border-green-100",
+      description: "Users currently shown here",
+    },
+    {
+      title: "Admins on Page",
+      value: users.filter((item) => item.role === "admin").length,
+      icon: Shield,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+      borderColor: "border-purple-100",
+      description: "Admin accounts in this view",
+    },
+    {
+      title: "Inactive on Page",
+      value: users.filter((item) => !item.isActive).length,
+      icon: UserX,
+      iconBg: "bg-orange-50",
+      iconColor: "text-orange-600",
+      borderColor: "border-orange-100",
+      description: "Accounts needing attention",
+    },
+  ];
+
   return (
     <div className="min-h-screen pt-24 px-4 bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -282,6 +321,31 @@ const UsersManagement = () => {
             </button>
           </div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"
+        >
+          {summaryCards.map((card) => {
+            const Icon = card.icon;
+
+            return (
+              <div key={card.title} className={`rounded-2xl border ${card.borderColor} bg-white p-5 shadow-sm`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">{card.value}</p>
+                    <p className="mt-2 text-sm text-gray-500">{card.description}</p>
+                  </div>
+                  <div className={`rounded-2xl ${card.iconBg} p-3`}>
+                    <Icon className={`h-6 w-6 ${card.iconColor}`} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </motion.div>
 
         <motion.form
           initial={{ opacity: 0, y: 16 }}
