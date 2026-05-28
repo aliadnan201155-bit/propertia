@@ -143,7 +143,7 @@ const PropertyForm = () => {
   };
 
   return (
-    <div className="min-h-screen pt-32 px-4 bg-gray-50">
+    <div className="min-h-screen pt-10 px-4 bg-gray-50">
       <div className="max-w-2xl mx-auto">
 
         {/* Card */}

@@ -207,7 +207,7 @@ const Navbar = () => {
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl shadow-green-500/30 font-semibold"
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl shadow-blue-500/30 font-semibold"
               >
                 <LayoutDashboard className="w-5 h-5" />
                 <span>Dashboard</span>
@@ -765,7 +765,7 @@ const MobileNavLinks = ({
             target="_blank"
             rel="noopener noreferrer"
             whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-4 px-5 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/30 font-semibold"
+            className="flex items-center gap-4 px-5 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/30 font-semibold"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="p-2 rounded-lg bg-white/20">
@@ -773,7 +773,7 @@ const MobileNavLinks = ({
             </div>
             <div className="flex-1">
               <div className="font-bold text-lg">Add Property</div>
-              <div className="text-sm text-green-100">List your property</div>
+              <div className="text-sm text-blue-100">List your property</div>
             </div>
           </motion.a>
         </motion.div>
