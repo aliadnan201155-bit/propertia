@@ -43,7 +43,7 @@ const MyMeetings = () => {
       }
     } catch (error) {
       console.error("Error fetching appointments:", error);
-      toast.error("Failed to fetch client meetings");
+      toast.error("Failed to fetch property visits");
     } finally {
       setLoading(false);
     }
@@ -90,15 +90,15 @@ const MyMeetings = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `client_meetings_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `property_visits_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-      toast.success('Client Meetings exported successfully');
+      toast.success('Property Visits exported successfully');
     } catch (error) {
       console.error('Error exporting meetings:', error);
-      toast.error('Failed to export client meetings');
+      toast.error('Failed to export property visits');
     }
   };
 
@@ -117,10 +117,10 @@ const MyMeetings = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              Client Meetings
+              My Property Visits
             </h1>
             <p className="text-gray-600">
-              View your client meetings
+              View your property visits
             </p>
           </div>
 
@@ -128,7 +128,7 @@ const MyMeetings = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search client meetings..."
+                placeholder="Search property visits..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -143,7 +143,7 @@ const MyMeetings = () => {
                 onChange={(e) => setFilter(e.target.value)}
                 className="rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">All Client Meetings</option>
+                <option value="all">All Property Visits</option>
                 <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="cancelled">Cancelled</option>

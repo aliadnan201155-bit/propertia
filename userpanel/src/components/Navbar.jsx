@@ -117,7 +117,7 @@ const Navbar = () => {
 
     {
       path: isAdmin ? "/admin/appointments" : "/owner/appointments",
-      label: "Property Visits",
+      label: "Client Meetings",
       icon: CalendarCheck,
     },
 
@@ -125,7 +125,7 @@ const Navbar = () => {
       ? [
           {
             path: "/owner/my-meetings",
-            label: "Client Meetings",
+            label: "Property Visits",
             icon: CalendarDays,
           },
         ]

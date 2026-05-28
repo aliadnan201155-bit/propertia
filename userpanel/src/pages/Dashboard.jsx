@@ -223,7 +223,7 @@ const Dashboard = () => {
     labels: ["Pending", "Confirmed", "Cancelled"],
     datasets: [
       {
-        label: "Property Visits by Status",
+        label: "Client Meetings by Status",
         data: [
           stats.pendingAppointments || 0,
           stats.confirmedAppointments || 0,
@@ -269,13 +269,13 @@ const Dashboard = () => {
           changeType: "positive",
         },
         {
-          title: "Total Property Visits",
+          title: "Total Client Meetings",
           value: stats.totalAppointments,
           icon: Calendar,
           color: "from-purple-500 to-purple-600",
           bgColor: "bg-purple-50",
           iconColor: "text-purple-600",
-          description: "Property Visits across platform",
+          description: "Client Meetings across platform",
           change: `${stats.pendingAppointments || 0} pending`,
           changeType: "positive",
         },
@@ -326,7 +326,7 @@ const Dashboard = () => {
           changeType: "positive",
         },
         {
-          title: "Pending Property Visits",
+          title: "Pending Client Meetings",
           value: stats.pendingAppointments,
           icon: Calendar,
           color: "from-orange-500 to-orange-600",
@@ -535,7 +535,7 @@ const Dashboard = () => {
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
                   {isAdmin
-                    ? "Property Visits and views in the last 30 days"
+                    ? "Client Meetings and views in the last 30 days"
                     : "Track your property engagement over time"}
                 </p>
               </div>
@@ -581,10 +581,10 @@ const Dashboard = () => {
               <div>
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <PieChart className="w-5 h-5 text-purple-600" />
-                  {isAdmin ? "Property Visit Status" : "Property Types"}
+                  {isAdmin ? "Client Meeting Status" : "Property Types"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  {isAdmin ? "Platform property visit breakdown" : "Distribution overview"}
+                  {isAdmin ? "Platform client meeting breakdown" : "Distribution overview"}
                 </p>
               </div>
             </div>
@@ -603,7 +603,7 @@ const Dashboard = () => {
                   <p className="text-gray-500 font-medium">No property data</p>
                   <p className="text-sm text-gray-400 text-center">
                     {isAdmin
-                      ? "Property visit data will appear as users schedule viewings"
+                      ? "Client meeting data will appear as users schedule viewings"
                       : "Add properties to see distribution"}
                   </p>
                 </div>
@@ -710,7 +710,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-600">
-                    {isAdmin ? "Confirmed Property Visit Rate" : "Active Listing Rate"}
+                    {isAdmin ? "Confirmed Client Meeting Rate" : "Active Listing Rate"}
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {isAdmin
