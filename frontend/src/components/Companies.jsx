@@ -1,6 +1,8 @@
 import { logos } from '../assets/logo';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Shield, TrendingUp, Star, Users, Award } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 // Animation variants
 const containerVariants = {
@@ -52,6 +54,8 @@ const floatingAnimation = {
 };
 
 const Companies = () => {
+  const { isLoggedIn } = useAuth();
+  const MotionLink = motion(Link);
   const stats = [
     { icon: Users, value: "200+", label: "Trusted Partners" },
     { icon: Star, value: "4.9", label: "Average Rating" },
@@ -221,30 +225,32 @@ const Companies = () => {
           </motion.div>
         </motion.div>
 
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-16"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-2xl 
-              shadow-2xl hover:shadow-blue-500/25 transition-all font-bold text-lg inline-flex items-center group relative overflow-hidden"
+        {!isLoggedIn && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="text-center mt-16"
           >
-            <span className="relative z-10 flex items-center">
-              Join Our Network
-              <TrendingUp className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </motion.button>
-          
-          <p className="text-gray-500 mt-4 text-sm">
-            Start your journey with industry-leading companies today
-          </p>
-        </motion.div>
+            <MotionLink
+              to="/signup"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-2xl 
+                shadow-2xl hover:shadow-blue-500/25 transition-all font-bold text-lg inline-flex items-center group relative overflow-hidden"
+            >
+              <span className="relative z-10 flex items-center">
+                Join Our Network
+                <TrendingUp className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </MotionLink>
+            
+            <p className="text-gray-500 mt-4 text-sm">
+              Start your journey with industry-leading companies today
+            </p>
+          </motion.div>
+        )}
       </div>
     </section>
   );
