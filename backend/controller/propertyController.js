@@ -1,5 +1,7 @@
 import firecrawlService from '../services/firecrawlService.js';
 import aiService from '../services/aiService.js';
+import Property from '../models/propertymodel.js';
+import User from '../models/Usermodel.js';
 
 export const searchProperties = async (req, res) => {
     try {
@@ -71,6 +73,30 @@ export const getLocationTrends = async (req, res) => {
             success: false, 
             message: 'Failed to get location trends',
             error: error.message
+        });
+    }
+};
+
+export const getPublicStats = async (req, res) => {
+    try {
+        const [totalUsers, totalProperties] = await Promise.all([
+            User.countDocuments(),
+            Property.countDocuments(),
+        ]);
+
+        return res.json({
+            success: true,
+            stats: {
+                totalUsers,
+                totalProperties,
+            },
+        });
+    } catch (error) {
+        console.error('Error getting public stats:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to get public stats',
+            error: error.message,
         });
     }
 };

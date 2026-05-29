@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   MapPin,
@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import heroimage from "../assets/images/heroimage.png";
 import { RadialGradient } from "react-text-gradients";
+import { getPublicStats } from "../services/api";
 
 const popularLocations = ["Karachi", "Islamabad", "Lahore", "Faisalabad"];
 
@@ -25,24 +26,18 @@ const quickFilters = [
   { label: "Studios", icon: Home, count: "1.2k+" },
 ];
 
-const stats = [
+const defaultStats = [
   {
     icon: Users,
-    value: "50K+",
-    label: "Happy Customers",
+    value: "0",
+    label: "Total Users",
     color: "from-blue-500 to-cyan-500",
   },
   {
     icon: Home,
-    value: "25K+",
+    value: "0",
     label: "Properties Listed",
     color: "from-green-500 to-emerald-500",
-  },
-  {
-    icon: Star,
-    value: "4.9",
-    label: "Average Rating",
-    color: "from-yellow-500 to-orange-500",
   },
   {
     icon: Shield,
@@ -100,10 +95,53 @@ const sparkleAnimation = {
 
 const Hero = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState(defaultStats);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [propertyType, setPropertyType] = useState("All");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  const formatCount = (value) => new Intl.NumberFormat("en-US").format(value || 0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadStats = async () => {
+      try {
+        const response = await getPublicStats();
+        if (!isMounted || !response?.stats) return;
+
+        setStats([
+          {
+            icon: Users,
+            value: formatCount(response.stats.totalUsers),
+            label: "Total Users",
+            color: "from-blue-500 to-cyan-500",
+          },
+          {
+            icon: Home,
+            value: formatCount(response.stats.totalProperties),
+            label: "Properties Listed",
+            color: "from-green-500 to-emerald-500",
+          },
+          {
+            icon: Shield,
+            value: "100%",
+            label: "Verified Properties",
+            color: "from-purple-500 to-pink-500",
+          },
+        ]);
+      } catch (error) {
+        console.error("Error loading hero stats:", error);
+      }
+    };
+
+    loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSubmit = (location = searchQuery) => {
     if (location.trim()) {
@@ -203,7 +241,7 @@ const Hero = () => {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white/90 backdrop-blur-md text-blue-700 rounded-full text-sm font-semibold mb-8 shadow-lg border border-blue-100"
               >
                 <Shield className="w-4 h-4" />
-                <span>Trusted by 50,000+ families</span>
+                <span>Trusted by {stats[0]?.value || "0"} users</span>
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star
@@ -400,7 +438,7 @@ const Hero = () => {
               {/* Stats Section */}
               <motion.div
                 variants={containerVariants}
-                className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto"
+                className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto"
               >
                 {stats.map((stat, index) => (
                   <motion.div

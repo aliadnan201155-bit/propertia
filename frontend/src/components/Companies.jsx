@@ -77,8 +77,9 @@ const Companies = () => {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+        
         {/* Header Section */}
-        <motion.div
+        {/* <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -109,10 +110,10 @@ const Companies = () => {
           >
             Join thousands of successful companies that rely on our platform for their real estate needs
           </motion.p>
-        </motion.div>
+        </motion.div> */}
 
         {/* Stats Section */}
-        <motion.div
+        {/* <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -136,7 +137,7 @@ const Companies = () => {
               <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div>  */}
 
         {/* Companies Grid */}
         <motion.div
