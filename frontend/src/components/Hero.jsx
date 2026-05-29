@@ -40,6 +40,12 @@ const defaultStats = [
     color: "from-green-500 to-emerald-500",
   },
   {
+    icon: Star,
+    value: "4.9",
+    label: "Average Rating",
+    color: "from-yellow-500 to-orange-500",
+  },
+  {
     icon: Shield,
     value: "100%",
     label: "Verified Properties",
@@ -123,6 +129,12 @@ const Hero = () => {
             value: formatCount(response.stats.totalProperties),
             label: "Properties Listed",
             color: "from-green-500 to-emerald-500",
+          },
+          {
+            icon: Star,
+            value: "4.9",
+            label: "Average Rating",
+            color: "from-yellow-500 to-orange-500",
           },
           {
             icon: Shield,
@@ -438,7 +450,7 @@ const Hero = () => {
               {/* Stats Section */}
               <motion.div
                 variants={containerVariants}
-                className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto"
+                className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto"
               >
                 {stats.map((stat, index) => (
                   <motion.div
