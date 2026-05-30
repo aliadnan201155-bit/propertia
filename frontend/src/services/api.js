@@ -31,4 +31,14 @@ export const getLocationTrends = async (city) => {
   }
 };
 
+export const getPublicStats = async () => {
+  try {
+    const response = await api.get('/api/public/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public stats:', error);
+    throw error;
+  }
+};
+
 export default api;

@@ -359,7 +359,7 @@ const Testimonials = () => {
         </motion.div>
 
         {/* Statistics Section */}
-        <motion.div 
+        {/* <motion.div 
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -390,7 +390,7 @@ const Testimonials = () => {
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> */}
 
         {/* Desktop Testimonials Grid */}
         <div className="hidden lg:block">
