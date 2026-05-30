@@ -10,22 +10,22 @@ let availableLocations = [];
 // ═════════════════════════════════════════════════════════════════════════════
 
 const AMENITY_MAP = {
-    'swimming pool'   : ['pool', 'swim', 'swimming'],
-    'home theater'    : ['theater', 'theatre', 'cinema', 'movie room'],
-    'gym'             : ['gym', 'gymnasium', 'fitness', 'workout', 'exercise room'],
-    'parking'         : ['parking', 'garage', 'car park', 'parking space'],
-    'garden'          : ['garden', 'yard', 'lawn', 'backyard'],
-    'security'        : ['security', 'guard', 'cctv', 'surveillance', 'gated'],
-    'elevator'        : ['elevator', 'lift'],
-    'balcony'         : ['balcony', 'terrace', 'patio', 'veranda'],
-    'generator'       : ['generator', 'backup power', 'ups', 'genset'],
-    'solar panels'    : ['solar', 'solar panels', 'solar energy'],
-    'internet'        : ['internet', 'wifi', 'wi-fi', 'broadband', 'fiber'],
+    'swimming pool': ['pool', 'swim', 'swimming'],
+    'home theater': ['theater', 'theatre', 'cinema', 'movie room'],
+    'gym': ['gym', 'gymnasium', 'fitness', 'workout', 'exercise room'],
+    'parking': ['parking', 'garage', 'car park', 'parking space'],
+    'garden': ['garden', 'yard', 'lawn', 'backyard'],
+    'security': ['security', 'guard', 'cctv', 'surveillance', 'gated'],
+    'elevator': ['elevator', 'lift'],
+    'balcony': ['balcony', 'terrace', 'patio', 'veranda'],
+    'generator': ['generator', 'backup power', 'ups', 'genset'],
+    'solar panels': ['solar', 'solar panels', 'solar energy'],
+    'internet': ['internet', 'wifi', 'wi-fi', 'broadband', 'fiber'],
     'air conditioning': ['ac', 'air conditioning', 'air conditioner', 'cooling'],
-    'central heating' : ['heating', 'heater', 'central heating'],
-    'store room'      : ['store room', 'storage', 'storeroom'],
+    'central heating': ['heating', 'heater', 'central heating'],
+    'store room': ['store room', 'storage', 'storeroom'],
     'servant quarters': ['servant quarters', 'servant room', 'maid room'],
-    'rooftop'         : ['rooftop', 'roof top', 'roof access'],
+    'rooftop': ['rooftop', 'roof top', 'roof access'],
 };
 
 const CONTACT = { phone: '+92 (021) 567-567', email: 'support@propertia.com' };
@@ -53,11 +53,11 @@ function buildLocationPatterns(locationStr) {
     if (noSpaces !== lower) patterns.add(noSpaces);
     if (lower.includes(' ')) patterns.add(lower.replace(/\s+/g, '[\\s\\-]*'));
     if (!lower.includes(' ') && lower.length <= 25) patterns.add(lower.split('').join('[\\s\\-]?'));
-    
+
     const words = lower.split(/\s+/).filter(w => w.length > 2);
     words.forEach(w => patterns.add(w));
 
-    return [...patterns].map(p => ({ 
+    return [...patterns].map(p => ({
         $or: [
             { location: { $regex: p, $options: 'i' } },
             { title: { $regex: p, $options: 'i' } }  // NEW: search title too
@@ -96,6 +96,53 @@ function isOffTopicQuestion(text) {
     ];
 
     return offTopicKeywords.some(keyword => new RegExp(`\\b${keyword}\\b`, 'i').test(lower));
+}
+
+function isGibberish(text) {
+    const lower = text.toLowerCase().trim();
+
+    // Pure numbers (with optional spaces/dashes)
+    if (/^[\d\s\-+().]+$/.test(lower)) return true;
+
+    // Too short to be meaningful (single random chars)
+    if (lower.length < 2) return true;
+
+    // Random characters — no vowels at all in a long string
+    const letters = lower.replace(/[^a-z]/g, '');
+    if (letters.length > 4) {
+        const vowelCount = (letters.match(/[aeiou]/g) || []).length;
+        const vowelRatio = vowelCount / letters.length;
+        if (vowelRatio < 0.1) return true;
+    }
+
+    // Excessive consecutive consonants (5+ in a row = not a real word)
+    if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(letters)) return true;
+
+    // Repeating character patterns (e.g., "aaaaaaa")
+    if (letters.length > 3 && new Set(letters.split('')).size <= 2) return true;
+
+    return false;
+}
+
+function hasNoFilters(intent) {
+    return (
+        !intent.location &&
+        !intent.propertyType &&
+        !intent.availability &&
+        intent.exactRooms === null &&
+        intent.minRooms === null &&
+        intent.maxRooms === null &&
+        intent.exactBaths === null &&
+        intent.minBaths === null &&
+        intent.exactSqft === null &&
+        intent.minSqft === null &&
+        intent.maxSqft === null &&
+        intent.minPrice === null &&
+        intent.maxPrice === null &&
+        (!intent.amenitiesInclude || intent.amenitiesInclude.length === 0) &&
+        (!intent.amenitiesExclude || intent.amenitiesExclude.length === 0) &&
+        !intent.sortBy
+    );
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -137,7 +184,9 @@ Return ONLY valid JSON (no markdown):
 Rules:
 
 queryType — exactly ONE of:
-  "GREETING" → hi, hello, hey, salam, wassup, bye, goodbye, alvida, khuda hafiz
+  "GREETING" → hi, hello, hey, salam, wassup, good morning, good evening, assalamu alaikum
+  "FAREWELL" → bye, goodbye, alvida, khuda hafiz, see you, take care, allah hafiz, fi aman allah
+  "UNKNOWN" → gibberish, random text, nonsense, unrelated non-property queries, anything that doesn't fit other types
   "COUNT" → how many properties, total listings, kitne hain
   "EXTREME" → most expensive, cheapest, biggest, smallest, sabse mehnga, sabse sasta
   "SEARCH" → any property search with filters
@@ -212,8 +261,8 @@ IMPORTANT:
         if (!Array.isArray(parsed.amenitiesExclude)) parsed.amenitiesExclude = [];
 
         // Type coercion
-        const numFields = ['exactRooms','minRooms','maxRooms','exactBaths','minBaths',
-                           'exactSqft','minSqft','maxSqft','minPrice','maxPrice','limit'];
+        const numFields = ['exactRooms', 'minRooms', 'maxRooms', 'exactBaths', 'minBaths',
+            'exactSqft', 'minSqft', 'maxSqft', 'minPrice', 'maxPrice', 'limit'];
         numFields.forEach(f => {
             if (parsed[f] !== null && parsed[f] !== undefined) {
                 const n = Number(parsed[f]);
@@ -255,16 +304,25 @@ async function handleGreeting(intent) {
     return { success: true, reply: greetings[intent.language] || greetings.mixed };
 }
 
+async function handleFarewell(intent) {
+    const farewells = {
+        english: `👋 Goodbye! Thank you for using PropX! 🏠\n\nWe hope we helped you find what you were looking for. Come back anytime!\n\n📞 Need help later? Call us at **${CONTACT.phone}**`,
+        roman_urdu: `👋 Allah Hafiz! PropX use karne ka shukriya! 🏠\n\nUmeed hai humne aapki madad ki hogi. Kabhi bhi wapas aayein!\n\n📞 Baad mein madad chahiye? Call karein: **${CONTACT.phone}**`,
+        mixed: `👋 Allah Hafiz! Thank you for using PropX! 🏠\n\nUmeed hai aapko apni pasand ki property mili hogi. Come back anytime!\n\n📞 Need help later? Call karein: **${CONTACT.phone}**`
+    };
+    return { success: true, reply: farewells[intent.language] || farewells.mixed };
+}
+
 async function handleCount(intent) {
     const query = buildSearchQuery(intent);
     const count = await Property.countDocuments(query);
-    
+
     const replies = {
         english: `📊 I found **${count} properties** matching your criteria.`,
         roman_urdu: `📊 Aapki criteria ke mutabiq **${count} properties** mili hain.`,
         mixed: `📊 I found **${count} properties** aapki criteria ke mutabiq.`
     };
-    
+
     return { success: true, reply: replies[intent.language] || replies.mixed, count };
 }
 
@@ -272,7 +330,7 @@ async function handleExtreme(intent) {
     // EXTREME means: most/least expensive, biggest/smallest with limit=1
     const query = buildSearchQuery(intent);
     const sort = buildSort(intent.sortBy || 'price_desc');  // Fallback
-    
+
     const result = await Property.findOne(query)
         .populate('userId', 'name email')
         .sort(sort)
@@ -287,8 +345,8 @@ async function handleExtreme(intent) {
     }
 
     const extremeType = intent.sortBy === 'price_desc' ? 'most expensive' :
-                        intent.sortBy === 'price_asc' ? 'cheapest' :
-                        intent.sortBy === 'sqft_desc' ? 'biggest' : 'smallest';
+        intent.sortBy === 'price_asc' ? 'cheapest' :
+            intent.sortBy === 'sqft_desc' ? 'biggest' : 'smallest';
 
     return {
         success: true,
@@ -359,9 +417,9 @@ async function handleSearch(intent) {
     }
 
     const sortLabel = intent.sortBy === 'price_asc' ? ' (sorted by price low to high)' :
-                      intent.sortBy === 'price_desc' ? ' (sorted by price high to low)' :
-                      intent.sortBy === 'sqft_desc' ? ' (sorted by size largest first)' :
-                      intent.sortBy === 'newest' ? ' (newest listings first)' : '';
+        intent.sortBy === 'price_desc' ? ' (sorted by price high to low)' :
+            intent.sortBy === 'sqft_desc' ? ' (sorted by size largest first)' :
+                intent.sortBy === 'newest' ? ' (newest listings first)' : '';
 
     return {
         success: true,
@@ -476,12 +534,12 @@ function buildRelaxedQuery(intent) {
 function buildSort(sortBy) {
     const sortMap = {
         'price_desc': { price: -1 },
-        'price_asc':  { price: 1 },
-        'sqft_desc':  { sqft: -1 },
-        'sqft_asc':   { sqft: 1 },
-        'beds_desc':  { beds: -1 },
-        'newest':     { createdAt: -1 },
-        'oldest':     { createdAt: 1 },
+        'price_asc': { price: 1 },
+        'sqft_desc': { sqft: -1 },
+        'sqft_asc': { sqft: 1 },
+        'beds_desc': { beds: -1 },
+        'newest': { createdAt: -1 },
+        'oldest': { createdAt: 1 },
     };
     return sortMap[sortBy] || { createdAt: -1 };  // Default: newest first
 }
@@ -552,14 +610,42 @@ export const chat = async (req, res) => {
             });
         }
 
+        // Gibberish / nonsense check
+        if (isGibberish(text)) {
+            return res.json({
+                success: true,
+                reply: `🤔 I couldn't understand that. Please try a valid property search query.\n\n💡 Examples:\n• "2 bedroom house in DHA"\n• "Apartment for rent in Karachi"\n• "Villa under 1 crore"\n• "Dikhao ghar Lahore mein"`,
+                isGeneralResponse: true
+            });
+        }
+
         // Intent extraction
         const intent = await analyzeUserIntent(text);
+
+        // If SEARCH with zero filters, the input likely had no real property intent
+        if (intent.queryType === 'SEARCH' && hasNoFilters(intent)) {
+            return res.json({
+                success: true,
+                reply: `🤔 I couldn't find any specific property criteria in your message.\n\n💡 Try something like:\n• "Show me 3 bedroom houses in DHA"\n• "Apartment for rent under 50 lakh"\n• "Cheapest villa in Bahria Town"\n• "Karachi mein ghar dikhao"`,
+                isGeneralResponse: true
+            });
+        }
 
         // Route by query type
         let response;
         switch (intent.queryType) {
             case 'GREETING':
                 response = await handleGreeting(intent);
+                break;
+            case 'FAREWELL':
+                response = await handleFarewell(intent);
+                break;
+            case 'UNKNOWN':
+                response = {
+                    success: true,
+                    reply: `🤔 I couldn't understand that. Please try a valid property search query.\n\n💡 Examples:\n• "2 bedroom house in DHA"\n• "Apartment for rent in Karachi"\n• "Villa under 1 crore"\n• "Dikhao ghar Lahore mein"`,
+                    isGeneralResponse: true
+                };
                 break;
             case 'COUNT':
                 response = await handleCount(intent);

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { 
-  Home, 
-  Twitter, 
-  Facebook, 
-  Instagram,  
-  Mail, 
-  Send, 
-  MapPin, 
+import {
+  Home,
+  Twitter,
+  Facebook,
+  Instagram,
+  Mail,
+  Send,
+  MapPin,
   Phone,
   ChevronRight,
   ArrowRight,
@@ -16,7 +16,8 @@ import {
   Star,
   Zap,
   Clock,
-  Shield
+  Shield,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
@@ -39,8 +40,8 @@ const containerVariants = {
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
       type: "spring",
@@ -78,14 +79,14 @@ const MobileFooterSection = ({ title, children, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <motion.div 
+    <motion.div
       className="border border-gray-200/50 bg-white/50 backdrop-blur-sm rounded-xl p-4 hover:shadow-lg transition-all duration-300"
       whileHover={{ scale: 1.02 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between text-left"
       >
@@ -102,7 +103,7 @@ const MobileFooterSection = ({ title, children, icon: Icon }) => {
           <ChevronDown className="w-5 h-5 text-gray-400" />
         </motion.div>
       </button>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -135,7 +136,7 @@ const FooterColumn = ({ title, children, className = '', delay = 0, icon: Icon }
       {title && (
         <div className="flex items-center gap-2 mb-6">
           {Icon && (
-            <motion.div 
+            <motion.div
               className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg"
               animate={floatingAnimation}
             >
@@ -153,46 +154,122 @@ const FooterColumn = ({ title, children, className = '', delay = 0, icon: Icon }
 };
 
 // Footer Link Component
-const FooterLink = ({ href, children, icon: Icon }) => {
+const FooterLink = ({ href, children, icon: Icon, onClick }) => {
+  const Tag = onClick ? 'button' : 'a';
+  const linkProps = onClick
+    ? { onClick, type: 'button' }
+    : { href };
+
   return (
-    <motion.a 
-      href={href} 
-      className="group flex items-center text-gray-600 transition-all duration-300 hover:text-blue-600 hover:translate-x-2 py-2 relative overflow-hidden"
+    <motion.div
+      className="group flex items-center text-gray-600 transition-all duration-300 hover:text-blue-600 hover:translate-x-2 py-2 relative overflow-hidden cursor-pointer"
       whileHover={{ x: 5 }}
       whileTap={{ scale: 0.98 }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-      <div className="relative z-10 flex items-center">
-        {Icon && <Icon className="w-4 h-4 mr-3 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity duration-300" />}
-        <ChevronRight className="w-3 h-3 mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0" />
-        <span className="font-medium">{children}</span>
-      </div>
-    </motion.a>
+      <Tag
+        {...linkProps}
+        className="flex items-center w-full bg-transparent border-none p-0 m-0 text-inherit cursor-pointer text-left"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+        <div className="relative z-10 flex items-center">
+          {Icon && <Icon className="w-4 h-4 mr-3 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity duration-300" />}
+          <ChevronRight className="w-3 h-3 mr-2 text-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0" />
+          <span className="font-medium">{children}</span>
+        </div>
+      </Tag>
+    </motion.div>
   );
+};
+
+// Toaster Modal Component for Terms & Privacy
+const ToasterModal = ({ isOpen, onClose, title, children }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          {/* Modal */}
+          <motion.div
+            className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+          >
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl border border-white/20 w-full max-w-lg">
+              {/* Gradient header */}
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    className="p-2 bg-white/20 rounded-lg backdrop-blur-sm"
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Shield className="w-5 h-5 text-white" />
+                  </motion.div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+                </div>
+                <motion.button
+                  onClick={onClose}
+                  whileHover={{ scale: 1.15, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-colors duration-200 border border-white/10"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </motion.button>
+              </div>
+              {/* Body */}
+              <div className="bg-white px-6 py-6">
+                <div className="text-gray-600 text-sm leading-relaxed space-y-3">
+                  {children}
+                </div>
+              </div>
+              {/* Footer accent */}
+              <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+ToasterModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 // Social Links Component
 const socialLinks = [
-  { 
-    icon: Twitter, 
-    href: '#', 
-    label: 'Twitter', 
+  {
+    icon: Twitter,
+    href: '#',
+    label: 'Twitter',
     color: 'from-[#1DA1F2] to-[#0d8bd9]',
-    hoverColor: 'hover:shadow-[#1DA1F2]/25' 
+    hoverColor: 'hover:shadow-[#1DA1F2]/25'
   },
-  { 
-    icon: Facebook, 
-    href: '#', 
-    label: 'Facebook', 
+  {
+    icon: Facebook,
+    href: '#',
+    label: 'Facebook',
     color: 'from-[#1877F2] to-[#0d65d9]',
-    hoverColor: 'hover:shadow-[#1877F2]/25' 
+    hoverColor: 'hover:shadow-[#1877F2]/25'
   },
-  { 
-    icon: Instagram, 
-    href: '#', 
-    label: 'Instagram', 
+  {
+    icon: Instagram,
+    href: '#',
+    label: 'Instagram',
     color: 'from-[#fd5949] via-[#d6249f] to-[#285AEB]',
-    hoverColor: 'hover:shadow-pink-500/25' 
+    hoverColor: 'hover:shadow-pink-500/25'
   },
 ];
 
@@ -230,21 +307,21 @@ const Newsletter = () => {
     e.preventDefault();
 
     // Email regex (simple & effective)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!email) {
-    toast.error('Please enter your email');
-    return;
-  }
+    if (!email) {
+      toast.error('Please enter your email');
+      return;
+    }
 
-  if (!emailRegex.test(email)) {
-    toast.error('Please enter a valid email address');
-    return;
-  }
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
 
-  // ✅ Success case
-  toast.success('🎉 Successfully subscribed to our App!');
-  setEmail('');
+    // ✅ Success case
+    toast.success('🎉 Successfully subscribed to our App!');
+    setEmail('');
 
 
 
@@ -274,7 +351,7 @@ const Newsletter = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="relative p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border border-blue-100 shadow-lg"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -286,9 +363,9 @@ const Newsletter = () => {
           <Sparkles className="w-6 h-6 text-blue-400" />
         </motion.div>
       </div>
-      
+
       <div className="flex items-center gap-3 mb-4">
-        <motion.div 
+        <motion.div
           className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg"
           animate={floatingAnimation}
         >
@@ -296,11 +373,11 @@ const Newsletter = () => {
         </motion.div>
         <h3 className="text-xl font-bold text-gray-800">Stay Updated</h3>
       </div>
-      
+
       <p className="text-gray-600 mb-6 text-sm leading-relaxed">
         Get the latest property listings, market insights, and exclusive deals delivered straight to your inbox.
       </p>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
           <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -314,7 +391,7 @@ const Newsletter = () => {
             className="pl-4 pr-4 py-4 w-full text-gray-700 placeholder-gray-400 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
           />
         </div>
-        
+
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -350,46 +427,47 @@ const companyLinks = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Properties', href: '/properties', icon: MapPin },
   { name: 'About Us', href: '/about', icon: Star },
-  { name: 'Contact', href: '/contact', icon: Mail },  
+  { name: 'Contact', href: '/contact', icon: Mail },
 ];
 
 const helpLinks = [
   { name: 'Customer Support', href: '/contact', icon: Heart },
   { name: 'FAQs', href: '/contact', icon: Sparkles },
-  { name: 'Terms & Conditions',  icon: Shield },
-  { name: 'Privacy Policy',  icon: Clock },
+  { name: 'Terms & Conditions', icon: Shield },
+  { name: 'Privacy Policy', icon: Clock },
 ];
 
 const contactInfo = [
-  { 
-    icon: MapPin, 
+  {
+    icon: MapPin,
     text: '526 Property Plaza, Silicon Valley, CA 94088',
-    href: 'https://maps.google.com/?q=123+Property+Plaza,Silicon+Valley,CA+94088' 
+    href: 'https://maps.google.com/?q=123+Property+Plaza,Silicon+Valley,CA+94088'
   },
-  { 
-    icon: Phone, 
+  {
+    icon: Phone,
     text: '+92 (021) 567-567',
     href: 'tel:+92021567567'
   },
-  { 
-    icon: Mail, 
+  {
+    icon: Mail,
     text: 'support@propertia.com',
-    href: 'mailto:support@propertia.com' 
+    href: 'mailto:support@propertia.com'
   },
 ];
 
 const Footer = () => {
+  const [activeModal, setActiveModal] = useState(null); // 'terms' | 'privacy' | null
   return (
     <footer className="relative">
       {/* Decorative background elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50"></div>
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent"></div>
-      
+
       {/* Main Footer */}
       <div className="relative pt-16 lg:pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Brand section */}
-          <motion.div 
+          <motion.div
             className="text-center lg:text-left mb-16"
             variants={sectionVariants}
             initial="hidden"
@@ -397,7 +475,7 @@ const Footer = () => {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-center lg:justify-start mb-6">
-              <motion.div 
+              <motion.div
                 className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg"
                 animate={glowAnimation}
               >
@@ -410,8 +488,8 @@ const Footer = () => {
                 <p className="text-sm text-gray-500 font-medium">Premium Real Estate</p>
               </div>
             </div>
-            
-            <motion.p 
+
+            <motion.p
               className="text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed text-lg"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -419,7 +497,7 @@ const Footer = () => {
             >
               Your trusted partner in finding the perfect home. We make property hunting simple, efficient, and tailored to your unique needs with cutting-edge technology and personalized service.
             </motion.p>
-            
+
             <div className="flex justify-center lg:justify-start">
               <SocialLinks />
             </div>
@@ -428,9 +506,9 @@ const Footer = () => {
           {/* Desktop layout */}
           <div className="hidden lg:grid grid-cols-12 gap-8 mb-12">
             {/* Quick Links Column */}
-            <FooterColumn 
-              title="Quick Links" 
-              className="col-span-3" 
+            <FooterColumn
+              title="Quick Links"
+              className="col-span-3"
               delay={0.2}
               icon={Home}
             >
@@ -446,16 +524,26 @@ const Footer = () => {
             </FooterColumn>
 
             {/* Help Column */}
-            <FooterColumn 
-              title="Support" 
-              className="col-span-3" 
+            <FooterColumn
+              title="Support"
+              className="col-span-3"
               delay={0.3}
               icon={Heart}
             >
               <ul className="space-y-3">
                 {helpLinks.map(link => (
                   <li key={link.name}>
-                    <FooterLink href={link.href} icon={link.icon}>
+                    <FooterLink
+                      href={link.href}
+                      icon={link.icon}
+                      onClick={
+                        link.name === 'Terms & Conditions'
+                          ? () => setActiveModal('terms')
+                          : link.name === 'Privacy Policy'
+                            ? () => setActiveModal('privacy')
+                            : undefined
+                      }
+                    >
                       {link.name}
                     </FooterLink>
                   </li>
@@ -464,17 +552,17 @@ const Footer = () => {
             </FooterColumn>
 
             {/* Contact Info */}
-            <FooterColumn 
-              title="Contact Us" 
-              className="col-span-3" 
+            <FooterColumn
+              title="Contact Us"
+              className="col-span-3"
               delay={0.4}
               icon={MapPin}
             >
               <ul className="space-y-4">
                 {contactInfo.map((item, index) => (
                   <li key={index}>
-                    <motion.a 
-                      href={item.href} 
+                    <motion.a
+                      href={item.href}
                       className="group flex items-start text-gray-600 hover:text-blue-600 transition-all duration-300 p-3 rounded-xl hover:bg-blue-50"
                       target={item.icon === MapPin ? "_blank" : undefined}
                       rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
@@ -489,7 +577,7 @@ const Footer = () => {
                 ))}
               </ul>
             </FooterColumn>
-            
+
             {/* Newsletter */}
             <div className="col-span-3">
               <Newsletter />
@@ -497,7 +585,7 @@ const Footer = () => {
           </div>
 
           {/* Mobile Accordions */}
-          <motion.div 
+          <motion.div
             className="lg:hidden space-y-4 mb-8"
             variants={containerVariants}
             initial="hidden"
@@ -520,7 +608,17 @@ const Footer = () => {
               <ul className="space-y-2">
                 {helpLinks.map(link => (
                   <li key={link.name}>
-                    <FooterLink href={link.href} icon={link.icon}>
+                    <FooterLink
+                      href={link.href}
+                      icon={link.icon}
+                      onClick={
+                        link.name === 'Terms & Conditions'
+                          ? () => setActiveModal('terms')
+                          : link.name === 'Privacy Policy'
+                            ? () => setActiveModal('privacy')
+                            : undefined
+                      }
+                    >
                       {link.name}
                     </FooterLink>
                   </li>
@@ -532,8 +630,8 @@ const Footer = () => {
               <ul className="space-y-3">
                 {contactInfo.map((item, index) => (
                   <li key={index}>
-                    <motion.a 
-                      href={item.href} 
+                    <motion.a
+                      href={item.href}
                       className="flex items-start text-gray-600 hover:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-blue-50"
                       target={item.icon === MapPin ? "_blank" : undefined}
                       rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
@@ -552,7 +650,7 @@ const Footer = () => {
           </motion.div>
         </div>
       </div>
-      
+
       {/* Bottom Bar */}
       <div className="relative bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 border-t border-gray-700/50">
         <div className="absolute inset-0 opacity-10">
@@ -560,7 +658,7 @@ const Footer = () => {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <motion.p 
+            <motion.p
               className="text-sm text-gray-300 text-center md:text-left flex items-center gap-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -570,7 +668,7 @@ const Footer = () => {
               <Heart className="w-4 h-4 text-red-400 animate-pulse" />
               <span className="text-gray-400">Made with love</span>
             </motion.p>
-            
+
             <motion.a
               href="/properties"
               whileHover={{ scale: 1.05 }}
@@ -605,6 +703,38 @@ const Footer = () => {
           color: 'white'
         }}
       />
+
+      {/* Terms & Conditions Modal */}
+      <ToasterModal
+        isOpen={activeModal === 'terms'}
+        onClose={() => setActiveModal(null)}
+        title="Terms & Conditions"
+      >
+        <p>
+          By accessing and using the Propertia platform, you agree to be bound by these Terms &amp; Conditions.
+          All property listings, images, and related content are provided for informational purposes only and
+          do not constitute a binding offer. Propertia reserves the right to modify, suspend, or discontinue
+          any part of the service at any time without prior notice. Users are responsible for maintaining the
+          confidentiality of their account credentials. Unauthorized use of this platform may give rise to a
+          claim for damages and/or be a criminal offense.
+        </p>
+      </ToasterModal>
+
+      {/* Privacy Policy Modal */}
+      <ToasterModal
+        isOpen={activeModal === 'privacy'}
+        onClose={() => setActiveModal(null)}
+        title="Privacy Policy"
+      >
+        <p>
+          At Propertia, we are committed to protecting your personal information and your right to privacy.
+          We collect personal data such as your name, email address, and browsing preferences solely to
+          enhance your experience on our platform. Your data is never sold to third parties. We employ
+          industry-standard encryption and security measures to safeguard your information. By using our
+          services, you consent to the collection and use of information in accordance with this policy.
+          You may request deletion of your data at any time by contacting our support team.
+        </p>
+      </ToasterModal>
     </footer>
   );
 };
@@ -630,9 +760,10 @@ FooterColumn.propTypes = {
 };
 
 FooterLink.propTypes = {
-  href: PropTypes.string.isRequired,
+  href: PropTypes.string,
   children: PropTypes.node.isRequired,
-  icon: PropTypes.elementType
+  icon: PropTypes.elementType,
+  onClick: PropTypes.func,
 };
 
 export default Footer;

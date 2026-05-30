@@ -1,4 +1,4 @@
-import  { useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, TrendingUp, Award, ChevronRight } from "lucide-react";
 import { features } from "../assets/featuredata";
@@ -17,8 +17,8 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 50, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     scale: 1,
     transition: {
@@ -32,8 +32,8 @@ const cardVariants = {
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
       duration: 0.8,
@@ -44,7 +44,7 @@ const headerVariants = {
 
 const pulseAnimation = {
   scale: [1, 1.05, 1],
-  transition: { 
+  transition: {
     duration: 2,
     repeat: Infinity,
     ease: "easeInOut"
@@ -82,7 +82,7 @@ const Features = () => {
           viewport={{ once: true }}
           className="text-center mb-20"
         >
-          <motion.div 
+          <motion.div
             animate={floatingAnimation}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-semibold tracking-wide mb-6 shadow-lg border border-blue-200/50"
           >
@@ -90,7 +90,7 @@ const Features = () => {
             OUR PREMIUM FEATURES
             <Sparkles className="w-4 h-4" />
           </motion.div>
-          
+
           <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 leading-tight pb-4">
             Why Choose{' '}
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
@@ -99,12 +99,12 @@ const Features = () => {
           </h2>
 
           <div className="flex justify-center mb-8">
-            <motion.div 
+            <motion.div
               className="w-32 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-full shadow-lg"
               animate={pulseAnimation}
             ></motion.div>
           </div>
-          
+
           <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-light">
             Experience unparalleled service with our innovative approach to finding your{' '}
             <span className="text-blue-600 font-semibold">perfect home</span>
@@ -147,7 +147,7 @@ const Features = () => {
               variants={cardVariants}
               onHoverStart={() => setHoveredCard(index)}
               onHoverEnd={() => setHoveredCard(null)}
-              whileHover={{ 
+              whileHover={{
                 y: -15,
                 scale: 1.02,
                 transition: { type: "spring", stiffness: 300, damping: 20 }
@@ -155,10 +155,10 @@ const Features = () => {
             >
               {/* Card Background with Gradient Border */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-3xl blur-sm opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
-              
+
               <div className="relative bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl hover:shadow-2xl border border-gray-100/50 hover:border-blue-200/50 transition-all duration-500 h-full">
                 {/* Icon with Enhanced Styling */}
-                <motion.div 
+                <motion.div
                   className="relative w-20 h-20 mb-8"
                   animate={hoveredCard === index ? { rotate: [0, 5, -5, 0] } : {}}
                   transition={{ duration: 0.5 }}
@@ -167,7 +167,7 @@ const Features = () => {
                   <div className="relative w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex items-center justify-center border border-blue-100 group-hover:border-blue-300 transition-all duration-300">
                     <feature.icon className="h-10 w-10 text-blue-600 group-hover:text-indigo-600 transition-colors duration-300" />
                   </div>
-                  
+
                   {/* Floating elements */}
                   <AnimatePresence>
                     {hoveredCard === index && (
@@ -182,35 +182,16 @@ const Features = () => {
                     )}
                   </AnimatePresence>
                 </motion.div>
-                
+
                 <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors duration-300">
                   {feature.title}
                 </h3>
-                
+
                 <p className="text-gray-600 leading-relaxed mb-8 text-sm">
                   {feature.description}
                 </p>
-                
-                {/* Enhanced Learn More Link */}
-                <motion.div
-                  className="flex items-center justify-between pt-6 border-t border-gray-100 group-hover:border-blue-200 transition-colors duration-300"
-                >
-                  <motion.a 
-                    // href="#"
-                    className="inline-flex items-center text-blue-600 text-sm font-semibold hover:text-blue-800 transition-colors group/link"
-                    whileHover={{ x: 5 }}
-                  >
-                    Explore Feature
-                    
-                  </motion.a>
-                  
-                  <motion.div
-                    className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <ArrowRight className="w-4 h-4 text-blue-600" />
-                  </motion.div>
-                </motion.div>
+
+
 
                 {/* Number indicator */}
                 <div className="absolute top-6 right-6 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600 group-hover:text-blue-600 transition-all duration-300">
@@ -220,9 +201,9 @@ const Features = () => {
             </motion.div>
           ))}
         </motion.div>
-        
+
         {/* Enhanced Call to Action */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -236,18 +217,18 @@ const Features = () => {
             >
               <TrendingUp className="w-8 h-8 text-white" />
             </motion.div>
-            
+
             <h3 className="text-3xl font-bold text-gray-900 mb-4">
               Ready to Find Your{' '}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Dream Home?
               </span>
             </h3>
-            
+
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Join thousands of satisfied customers who found their perfect home with our premium features and personalized service.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <motion.a
                 href="/properties"
@@ -261,7 +242,7 @@ const Features = () => {
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </motion.a>
-              
+
               <motion.a
                 href="/contact"
                 whileHover={{ scale: 1.05, y: -2 }}
@@ -272,7 +253,7 @@ const Features = () => {
                 <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
               </motion.a>
             </div>
-            
+
             {/* Stats Row */}
             <motion.div
               initial={{ opacity: 0 }}

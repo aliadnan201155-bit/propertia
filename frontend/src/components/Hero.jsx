@@ -171,11 +171,9 @@ const Hero = () => {
               key={i}
               animate={sparkleAnimation}
               transition={{ delay: i * 0.5 }}
-              className={`absolute w-6 h-6 text-yellow-400/60 ${
-                i % 2 === 0 ? "top-1/4" : "top-3/4"
-              } ${
-                i % 3 === 0 ? "left-1/4" : i % 3 === 1 ? "left-1/2" : "left-3/4"
-              }`}
+              className={`absolute w-6 h-6 text-yellow-400/60 ${i % 2 === 0 ? "top-1/4" : "top-3/4"
+                } ${i % 3 === 0 ? "left-1/4" : i % 3 === 1 ? "left-1/2" : "left-3/4"
+                }`}
             >
               <Sparkles className="w-full h-full" />
             </motion.div>
@@ -261,17 +259,13 @@ const Hero = () => {
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                         // onClick={() => setPropertyType(filter.label)}
-                        className={`px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 ${
-                          propertyType === filter.label
-                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                        className={`px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 ${propertyType === filter.label
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
                       >
                         <filter.icon className="w-4 h-4" />
                         <span>{filter.label}</span>
-                        <span className="text-xs opacity-75">
-                          ({filter.count})
-                        </span>
                       </motion.button>
                     ))}
                   </div>
@@ -280,9 +274,8 @@ const Hero = () => {
                   <div className="flex flex-col lg:flex-row gap-4">
                     <div className="relative flex-1">
                       <MapPin
-                        className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
-                          isSearchFocused ? "text-blue-500" : "text-gray-400"
-                        }`}
+                        className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${isSearchFocused ? "text-blue-500" : "text-gray-400"
+                          }`}
                       />
                       <input
                         type="text"
