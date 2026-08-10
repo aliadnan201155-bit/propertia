@@ -668,6 +668,7 @@ const PropertyListings = ({ adminMode = false }) => {
                         </span>
                       </div>
 
+
                       {/* Action Buttons */}
                       <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                         <Link 
