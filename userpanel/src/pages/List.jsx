@@ -448,7 +448,7 @@ const PropertyListings = ({ adminMode = false }) => {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">For Buy</p>
+                <p className="text-sm font-medium text-gray-600">For Sale</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {isAdmin ? overviewStats.buyProperties : properties.filter(p => p.availability === 'buy').length}
                 </p>
@@ -656,11 +656,15 @@ const PropertyListings = ({ adminMode = false }) => {
                       {/* Status Badge */}
                       <div className="absolute top-4 right-4">
                         <span className={`px-3 py-1 text-xs font-medium rounded-full backdrop-blur-sm shadow-sm ${
-                          property.availability === 'rent' 
+                          `${property.availability || ''}`.toLowerCase().trim() === 'rent'
                             ? 'bg-green-500/90 text-white' 
                             : 'bg-blue-500/90 text-white'
                         }`}>
-                          For {property.availability}
+                          For {`${property.availability || ''}`.toLowerCase().trim() === 'buy' || `${property.availability || ''}`.toLowerCase().trim() === 'sale' || `${property.availability || ''}`.toLowerCase().trim() === 'for sale'
+                            ? 'Sale'
+                            : `${property.availability || ''}`.toLowerCase().trim() === 'rent' || `${property.availability || ''}`.toLowerCase().trim() === 'for rent'
+                              ? 'Rent'
+                              : property.availability || 'Available'}
                         </span>
                       </div>
 

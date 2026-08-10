@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  MapPin, 
-  CircleDollarSign, 
-  BedDouble, 
-  Bath, 
+import {
+  MapPin,
+  CircleDollarSign,
+  BedDouble,
+  Bath,
   Maximize,
   Share2,
   ChevronLeft,
@@ -132,7 +132,7 @@ const PropertyCard = ({ property, viewType }) => {
 
         {/* Property Tags */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="bg-gradient-to-r from-blue-600 to-blue-500 text-white 
@@ -140,13 +140,15 @@ const PropertyCard = ({ property, viewType }) => {
           >
             {property.type}
           </motion.span>
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="bg-gradient-to-r from-green-600 to-green-500 text-white 
               px-3 py-1 rounded-full text-sm font-medium shadow-lg"
           >
-            {property.availability}
+            {/* Line 149 — "buy" aaye to "sale" dikhao */}
+            {property.availability === 'buy' ? 'sale' : property.availability}
+            {/* {property.availability} */}
           </motion.span>
         </div>
       </div>

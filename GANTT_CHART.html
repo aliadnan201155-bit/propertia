@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Propertia – 9-Month Project Roadmap Gantt Chart</title>
+  <style>
+    /* ── Reset ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Page ── */
+    body {
+      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-size: 11px;
+      background: #a8b4be;
+      min-height: 100vh;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #fff;
+      border: 1px solid #8090a0;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+      flex-wrap: wrap;
+    }
+
+    .toolbar h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a2a3a;
+    }
+
+    .toolbar span {
+      font-size: 10px;
+      color: #667788;
+      flex: 1;
+    }
+
+    .btn {
+      padding: 4px 12px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid #7090a8;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #e8f0f8, #ccd8e8);
+      color: #1a2a3a;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: linear-gradient(180deg, #d8e8f8, #b8cce0);
+    }
+
+    /* ── Card ── */
+    .card {
+      display: flex;
+      background: #fff;
+      border: 2px solid #445566;
+      box-shadow: 3px 5px 20px rgba(0, 0, 0, .35);
+      overflow: hidden;
+      flex: 1;
+    }
+
+    /* ── Vertical Title ── */
+    .vtitle {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #1a2a3a;
+      background: linear-gradient(to top, #cad6e6, #dce6f2);
+      border-right: 2px solid #6880a0;
+      padding: 16px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    /* ── Scroll Area ── */
+    .scroll-wrap {
+      flex: 1;
+      overflow: auto;
+      max-height: calc(100vh - 80px);
+    }
+
+    /* ── Table ── */
+    table.gt {
+      border-collapse: collapse;
+      table-layout: fixed;
+      min-width: max-content;
+    }
+
+    .gt th,
+    .gt td {
+      border: 1px solid #b0bcc8;
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    /* ── Sticky thead rows ── */
+    thead tr:nth-child(1) th {
+      position: sticky;
+      top: 0;
+      z-index: 12;
+    }
+
+    thead tr:nth-child(2) th {
+      position: sticky;
+      top: 30px;
+      z-index: 12;
+    }
+
+    /* ── Sticky tfoot rows ── */
+    tfoot tr:nth-child(1) th,
+    tfoot tr:nth-child(1) td {
+      position: sticky;
+      bottom: 26px;
+      z-index: 12;
+    }
+
+    tfoot tr:nth-child(2) th,
+    tfoot tr:nth-child(2) td {
+      position: sticky;
+      bottom: 0;
+      z-index: 12;
+    }
+
+    /* ── Sticky left column ── */
+    .tc {
+      position: sticky;
+      left: 0;
+      z-index: 8;
+      background: #fff;
+      width: 190px;
+      min-width: 190px;
+      max-width: 190px;
+      border-right: 2px solid #6880a0 !important;
+    }
+
+    thead .tc,
+    tfoot .tc {
+      z-index: 15 !important;
+    }
+
+    /* ── Month header ── */
+    .mh {
+      background: #c0d4e8;
+      font-weight: 700;
+      font-size: 11px;
+      text-align: center;
+      height: 30px;
+      border-bottom: 2px solid #5870a0 !important;
+      color: #1a2a3a;
+      white-space: nowrap;
+    }
+
+    .tc.mh {
+      text-align: left;
+      padding: 4px 6px;
+    }
+
+    /* ── Week sub-header ── */
+    .wh {
+      background: #d8e6f2;
+      text-align: center;
+      font-size: 8px;
+      font-weight: 600;
+      color: #2a3a4a;
+      padding: 1px 0;
+      width: 36px;
+      min-width: 36px;
+      max-width: 36px;
+      height: 26px;
+      line-height: 1.3;
+    }
+
+    .wh.cw {
+      background: #fff5a0 !important;
+      color: #7a5000;
+    }
+
+    /* ── Week data cells ── */
+    .wc {
+      width: 36px;
+      min-width: 36px;
+      max-width: 36px;
+      height: 28px;
+      background: #fff;
+      position: relative;
+      padding: 0;
+    }
+
+    .wc.alt {
+      background: #f0f5fa;
+    }
+
+    .wc.cw {
+      background: #fff5a0 !important;
+    }
+
+    /* ── Phase row ── */
+    tr.phrow .tc {
+      background: #dbe8f4;
+    }
+
+    tr.phrow .wc {
+      background: #dbe8f4 !important;
+    }
+
+    tr.phrow .wc.alt {
+      background: #d3e0ee !important;
+    }
+
+    tr.phrow .wc.cw {
+      background: #fff0a0 !important;
+    }
+
+    /* ── Task name labels ── */
+    .lbl {
+      display: block;
+      padding: 2px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lbl.ph {
+      font-weight: 700;
+      font-size: 11px;
+      padding: 3px 6px;
+      background: #dbe8f4;
+      color: #0a1820;
+    }
+
+    .lbl.tk {
+      font-size: 10px;
+      padding: 2px 6px 2px 20px;
+      color: #223344;
+    }
+
+    /* ── Bar ── */
+    .bar {
+      position: absolute;
+      top: 4px;
+      height: 20px;
+      border-radius: 2px;
+      border: 1px solid #3870a0;
+      background: linear-gradient(180deg, #ccdde8 0%, #9abcd2 45%, #7ea8c4 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      cursor: default;
+      z-index: 3;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 1px 2px rgba(0, 0, 0, .18);
+      transition: filter .15s;
+    }
+
+    .bar:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Phase bar */
+    .bar.phb {
+      top: 8px;
+      height: 13px;
+      background: linear-gradient(180deg, #90a8c0 0%, #5880a0 50%, #3d6080 100%);
+      border-color: #2d5070;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 1px 2px rgba(0, 0, 0, .25);
+    }
+
+    /* Milestone bar */
+    .bar.ms {
+      top: 8px;
+      height: 13px;
+      background: linear-gradient(180deg, #c0a000 0%, #906000 100%);
+      border-color: #604000;
+      width: 13px !important;
+      border-radius: 0;
+      transform: rotate(45deg);
+      transform-origin: 6.5px 6.5px;
+      overflow: visible;
+    }
+
+    /* ── Bar rotated text ── */
+    .bt {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 7.5px;
+      font-weight: 700;
+      color: #0a1a2a;
+      white-space: nowrap;
+      overflow: hidden;
+      padding: 1px 2px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .phb .bt {
+      color: #eef4f8;
+      font-size: 7px;
+    }
+
+    /* ── Dependency arrow ── */
+    .darr {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 0;
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 7px solid #1a50a0;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* ── Today vertical line ── */
+    .tline {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 2px;
+      background: rgba(190, 20, 20, .65);
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    /* ── Tooltip ── */
+    #tt {
+      position: fixed;
+      background: #fff;
+      border: 1px solid #7090a8;
+      padding: 6px 12px;
+      font-size: 10px;
+      color: #1a2a3a;
+      z-index: 999;
+      box-shadow: 2px 3px 10px rgba(0, 0, 0, .3);
+      pointer-events: none;
+      display: none;
+      max-width: 260px;
+      line-height: 1.6;
+    }
+
+    #tt.v {
+      display: block;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .toolbar {
+        display: none;
+      }
+
+      .scroll-wrap {
+        overflow: visible;
+        max-height: none;
+      }
+
+      .card {
+        border: 1px solid #888;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <h2>🏠 Propertia — 9-Month Project Roadmap Gantt Chart</h2>
+    <span>September 2025 – May 2026 &nbsp;|&nbsp; 39 Weeks &nbsp;|&nbsp; 7 Phases &nbsp;|&nbsp; 29 Tasks</span>
+    <button class="btn" onclick="window.print()">🖨️ Print / PDF</button>
+    <button class="btn" onclick="scrollToToday()">📍 Today</button>
+  </div>
+
+  <!-- Gantt Card -->
+  <div class="card">
+    <div class="vtitle">Propertia Project Roadmap</div>
+    <div class="scroll-wrap" id="sw">
+      <table class="gt" id="gt">
+        <thead id="th"></thead>
+        <tbody id="tb"></tbody>
+        <tfoot id="tf"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tooltip -->
+  <div id="tt"></div>
+
+  <script>
+    /* ════════════════════════════════════════════
+       CONFIG
+    ════════════════════════════════════════════ */
+    const NW = 39;    // total weeks  (Sep 1, 2025 → May 31, 2026)
+    const CW = 36;    // px per week column
+    const ROW = 28;    // px per row
+    const TODAY = -1;  // -1 = no highlight (project is completed / past end date)
+
+    const MNSHT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const MNFLL = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+
+    /* ════════════════════════════════════════════
+       WEEK GENERATION
+    ════════════════════════════════════════════ */
+    function genWeeks() {
+      const start = new Date(2025, 8, 1); // Sep 1 2025
+      return Array.from({ length: NW }, (_, i) => {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i * 7);
+        return { i, d, m: d.getMonth(), y: d.getFullYear(), day: d.getDate() };
+      });
+    }
+
+    function monthSpans(ws) {
+      const spans = []; let cur = null;
+      ws.forEach(w => {
+        const k = `${w.y}-${w.m}`;
+        if (!cur || k !== cur.k) {
+          if (cur) spans.push(cur);
+          cur = { k, label: `${MNFLL[w.m]} ${w.y}`, n: 1 };
+        } else cur.n++;
+      });
+      if (cur) spans.push(cur);
+      return spans;
+    }
+
+    /* ════════════════════════════════════════════
+       PROJECT DATA
+       s = start week index (0-based)
+       d = duration in weeks
+    ════════════════════════════════════════════ */
+    const PHASES = [
+      {
+        id: 'p1', label: '□  Project Setup', s: 0, d: 2,
+        tasks: [
+          { id: 't1', n: 'Repository Init & Git Setup', s: 0, d: 1 },
+          { id: 't2', n: 'Backend Config (Node/Express)', s: 0, d: 2, dep: 't1' },
+          { id: 't3', n: 'Database Connection (MongoDB)', s: 0, d: 1 },
+          { id: 't4', n: 'Env Setup (.env)', s: 1, d: 1, dep: 't3' },
+        ]
+      },
+      {
+        id: 'p2', label: '□  Authentication System', s: 1, d: 4,
+        tasks: [
+          { id: 't5', n: 'User Model & Validation', s: 1, d: 2, dep: 't4' },
+          { id: 't6', n: 'JWT & Cookie Logic', s: 2, d: 2, dep: 't5' },
+          { id: 't7', n: 'Login / Signup UI', s: 3, d: 2, dep: 't6' },
+          { id: 't8', n: 'Forgot Password Service', s: 4, d: 1, dep: 't7' },
+        ]
+      },
+      {
+        id: 'p3', label: '□  Property Management', s: 2, d: 10,
+        tasks: [
+          { id: 't9', n: 'Property Model Schema', s: 2, d: 2, dep: 't4' },
+          { id: 't10', n: 'CRUD APIs (Add/Update/Delete)', s: 4, d: 4, dep: 't9' },
+          { id: 't11', n: 'Image Upload Service (ImageKit)', s: 6, d: 3, dep: 't10' },
+          { id: 't12', n: 'Frontend Listing & Filtering', s: 9, d: 3, dep: 't11' },
+        ]
+      },
+      {
+        id: 'p4', label: '□  Appointment System', s: 8, d: 9,
+        tasks: [
+          { id: 't13', n: 'Appointment Booking Logic', s: 8, d: 3, dep: 't10' },
+          { id: 't14', n: 'Email Notifications (Brevo)', s: 10, d: 2, dep: 't13' },
+          { id: 't15', n: 'User Dashboard (Appointments)', s: 12, d: 3, dep: 't14' },
+          { id: 't16', n: 'Admin Panel Management', s: 14, d: 3, dep: 't15' },
+        ]
+      },
+      {
+        id: 'p5', label: '□  AI & Advanced Features', s: 12, d: 10,
+        tasks: [
+          { id: 't17', n: 'AI Search (OpenRouter)', s: 12, d: 4, dep: 't10' },
+          { id: 't18', n: 'Chatbot Controller', s: 15, d: 4, dep: 't17' },
+          // { id:'t19', n:'News / Blog System',              s:17, d:3, dep:'t16' },
+          { id: 't20', n: 'AI Chatbot UI Widget', s: 19, d: 3, dep: 't18' },
+        ]
+      },
+      {
+        id: 'p6', label: '□  Frontend & User Panel', s: 17, d: 11,
+        tasks: [
+          { id: 't21', n: 'Admin Panel UI (Complete)', s: 17, d: 5, dep: 't16' },
+          { id: 't22', n: 'Public Homepage & Property Pages', s: 21, d: 4, dep: 't12' },
+          { id: 't23', n: 'User Panel (userpanel)', s: 23, d: 4, dep: 't22' },
+          // { id: 't24', n: 'Mobile Responsiveness', s: 25, d: 3, dep: 't23' },
+        ]
+      },
+      {
+        id: 'p7', label: '□  Deployment & Testing', s: 29, d: 10,
+        tasks: [
+          { id: 't25', n: 'API Testing (Postman / Jest)', s: 29, d: 3, dep: 't24' },
+          // { id: 't26', n: 'Security Audit', s: 31, d: 2, dep: 't25' },
+          { id: 't27', n: 'Performance Testing', s: 32, d: 2, dep: 't25' },
+          { id: 't28', n: 'Frontend Deployment (Vercel)', s: 34, d: 2, dep: 't24' },
+          { id: 't29', n: 'Backend Deployment (Render)', s: 35, d: 2, dep: 't26' },
+          { id: 't30', n: 'Final Polish & Bug Fixes', s: 37, d: 2, dep: 't29' },
+        ]
+      },
+    ];
+
+    /* ════════════════════════════════════════════
+       BUILD HEADER ROWS (reused for thead & tfoot)
+    ════════════════════════════════════════════ */
+    function buildHeaderRows(ws, ms) {
+      // Row 1 – month spans
+      const r1 = document.createElement('tr');
+      const th0 = document.createElement('th');
+      th0.className = 'tc mh';
+      th0.rowSpan = 2;
+      th0.innerHTML = '<span style="padding:4px 6px;display:block;font-weight:700;">Task Name</span>';
+      r1.appendChild(th0);
+      ms.forEach(m => {
+        const th = document.createElement('th');
+        th.colSpan = m.n;
+        th.className = 'mh';
+        th.textContent = m.label;
+        r1.appendChild(th);
+      });
+
+      // Row 2 – week dates
+      const r2 = document.createElement('tr');
+      ws.forEach(w => {
+        const th = document.createElement('th');
+        th.className = 'wh' + (w.i === TODAY ? ' cw' : '');
+        th.innerHTML = `${w.day}<br>${MNSHT[w.m]}`;
+        r2.appendChild(th);
+      });
+      return [r1, r2];
+    }
+
+    /* ════════════════════════════════════════════
+       MAIN RENDER
+    ════════════════════════════════════════════ */
+    function render() {
+      const ws = genWeeks();
+      const ms = monthSpans(ws);
+
+      const thead = document.getElementById('th');
+      const tbody = document.getElementById('tb');
+      const tfoot = document.getElementById('tf');
+
+      // ─ thead
+      buildHeaderRows(ws, ms).forEach(r => thead.appendChild(r));
+
+      // ─ tbody
+      const phaseRows = {};   // phId → <tr>
+      const taskRows = {};   // taskId → {tr, task}
+
+      PHASES.forEach(ph => {
+        /* Phase row */
+        const phr = document.createElement('tr');
+        phr.className = 'phrow';
+        phr.dataset.phid = ph.id;
+
+        const ptd = document.createElement('td');
+        ptd.className = 'tc';
+        ptd.innerHTML = `<span class="lbl ph" title="${ph.label}">${ph.label}</span>`;
+        phr.appendChild(ptd);
+
+        ws.forEach(w => {
+          const td = document.createElement('td');
+          td.className = 'wc' + (w.i % 2 ? ' alt' : '') + (w.i === TODAY ? ' cw' : '');
+          td.dataset.wi = w.i;
+          phr.appendChild(td);
+        });
+        tbody.appendChild(phr);
+        phaseRows[ph.id] = phr;
+
+        /* Task rows */
+        ph.tasks.forEach(t => {
+          const tr = document.createElement('tr');
+          tr.dataset.tid = t.id;
+
+          const td = document.createElement('td');
+          td.className = 'tc';
+          td.innerHTML = `<span class="lbl tk" title="${t.n}">${t.n}</span>`;
+          tr.appendChild(td);
+
+          ws.forEach(w => {
+            const wc = document.createElement('td');
+            wc.className = 'wc' + (w.i % 2 ? ' alt' : '') + (w.i === TODAY ? ' cw' : '');
+            wc.dataset.wi = w.i;
+            tr.appendChild(wc);
+          });
+          tbody.appendChild(tr);
+          taskRows[t.id] = { tr, task: t };
+        });
+      });
+
+      // ─ tfoot (mirror of thead)
+      buildHeaderRows(ws, ms).forEach(r => tfoot.appendChild(r));
+
+      // ─ Add bars + decorations after layout
+      requestAnimationFrame(() => {
+        /* Phase bars */
+        PHASES.forEach(ph => {
+          addBar(phaseRows[ph.id], ph.s, ph.d, ph.label.replace(/□\s+/, ''), true, ph.id);
+        });
+
+        /* Task bars + dependency arrows */
+        Object.values(taskRows).forEach(({ tr, task }) => {
+          addBar(tr, task.s, task.d, task.n, false, task.id);
+          if (task.dep) addArrow(tr, task.s);
+        });
+
+        /* Today column lines */
+        tbody.querySelectorAll('tr').forEach(tr => {
+          const c = getCell(tr, TODAY);
+          if (!c) return;
+          const line = document.createElement('div');
+          line.className = 'tline';
+          c.style.overflow = 'visible';
+          c.style.position = 'relative';
+          c.appendChild(line);
+        });
+      });
+    }
+
+    /* ════════════════════════════════════════════
+       HELPERS
+    ════════════════════════════════════════════ */
+    function getCell(tr, wi) {
+      return tr.querySelector(`td.wc[data-wi="${wi}"]`);
+    }
+
+    function addBar(tr, s, d, label, isPhase, id) {
+      const c = getCell(tr, s);
+      if (!c) return;
+      c.style.overflow = 'visible';
+      c.style.position = 'relative';
+
+      const bar = document.createElement('div');
+      bar.className = 'bar' + (isPhase ? ' phb' : '');
+      bar.style.left = '1px';
+      bar.style.width = (CW * d - 2) + 'px';
+
+      const txt = document.createElement('span');
+      txt.className = 'bt';
+      txt.textContent = label;
+      bar.appendChild(txt);
+
+      // Tooltip
+      const tt = document.getElementById('tt');
+      const weeks = genWeeks();
+      const startW = weeks[s];
+      const endW = weeks[Math.min(s + d - 1, NW - 1)];
+      const tip = `<strong>${label}</strong><br>` +
+        `📅 ${startW.day} ${MNSHT[startW.m]} – ${endW.day} ${MNSHT[endW.m]} ${endW.y}<br>` +
+        `⏱ ${d} week${d > 1 ? 's' : ''}`;
+
+      bar.addEventListener('mouseenter', e => { tt.innerHTML = tip; tt.classList.add('v'); moveTT(e); });
+      bar.addEventListener('mousemove', moveTT);
+      bar.addEventListener('mouseleave', () => tt.classList.remove('v'));
+
+      c.appendChild(bar);
+    }
+
+    function addArrow(tr, s) {
+      const c = getCell(tr, s);
+      if (!c) return;
+      c.style.overflow = 'visible';
+      c.style.position = 'relative';
+      const arr = document.createElement('div');
+      arr.className = 'darr';
+      c.appendChild(arr);
+    }
+
+    function moveTT(e) {
+      const tt = document.getElementById('tt');
+      let x = e.clientX + 15, y = e.clientY + 15;
+      const r = tt.getBoundingClientRect();
+      if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 15;
+      if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - 15;
+      tt.style.left = x + 'px';
+      tt.style.top = y + 'px';
+    }
+
+    function scrollToToday() {
+      const sw = document.getElementById('sw');
+      const tcW = 190 + 2; // task col + border
+      const targetX = tcW + TODAY * CW - 40;
+      sw.scrollTo({ left: Math.max(0, targetX), behavior: 'smooth' });
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', render);
+  </script>
+</body>
+
+</html>

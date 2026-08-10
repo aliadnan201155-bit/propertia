@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Propertia — Entity Relationship Diagram</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --pk: #facc15;
+      --fk: #38bdf8;
+      --req: #f472b6;
+      --green: #34d399;
+      --orange: #fb923c;
+      --red: #f87171;
+      --card-glow: rgba(99, 102, 241, .08);
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Ambient Background ──────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 900px 600px at 15% 20%, rgba(99, 102, 241, .07), transparent),
+        radial-gradient(ellipse 700px 500px at 85% 75%, rgba(139, 92, 246, .06), transparent),
+        radial-gradient(ellipse 500px 400px at 50% 50%, rgba(56, 189, 248, .04), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ──────────────────────────────────────── */
+    .header {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 3rem 1rem 1.5rem;
+    }
+
+    .header__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, .15), rgba(139, 92, 246, .12));
+      border: 1px solid rgba(99, 102, 241, .25);
+      border-radius: 999px;
+      padding: .35rem 1rem;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .header__badge span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .4;
+      }
+    }
+
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #e2e8f0 20%, var(--accent) 50%, var(--accent2) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+
+    .header p {
+      color: var(--text-dim);
+      margin-top: .5rem;
+      font-size: .95rem;
+      font-weight: 400;
+    }
+
+    /* ── Legend ───────────────────────────────────────── */
+    .legend {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      padding: 0 1rem 2rem;
+    }
+
+    .legend__item {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .78rem;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    .legend__dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    /* ── Canvas (SVG lines sit here) ─────────────────── */
+    .canvas-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      min-height: 1750px;
+      padding: 0 2rem 4rem;
+    }
+
+    .canvas-wrapper svg.lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Entity Card ─────────────────────────────────── */
+    .entity {
+      position: absolute;
+      width: 290px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, .03),
+        0 8px 32px rgba(0, 0, 0, .45),
+        0 0 60px var(--card-glow);
+      transition: transform .3s ease, box-shadow .3s ease;
+      z-index: 1;
+    }
+
+    .entity:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 0 0 1px rgba(99, 102, 241, .2),
+        0 12px 48px rgba(0, 0, 0, .55),
+        0 0 80px rgba(99, 102, 241, .12);
+    }
+
+    .entity__header {
+      padding: .85rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .entity__icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .entity__name {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -.01em;
+    }
+
+    .entity__collection {
+      font-size: .68rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    /* ── Field Rows ──────────────────────────────────── */
+    .entity__fields {
+      padding: .5rem 0;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      padding: .35rem 1.1rem;
+      gap: .55rem;
+      transition: background .2s;
+    }
+
+    .field:hover {
+      background: rgba(255, 255, 255, .025);
+    }
+
+    .field__key-icon {
+      width: 16px;
+      text-align: center;
+      font-size: .7rem;
+      flex-shrink: 0;
+    }
+
+    .field__name {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .field__type {
+      font-size: .7rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, .04);
+      padding: .12rem .45rem;
+      border-radius: 4px;
+    }
+
+    .field__badge {
+      font-size: .58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: .1rem .35rem;
+      border-radius: 3px;
+    }
+
+    .badge--pk {
+      color: var(--pk);
+      background: rgba(250, 204, 21, .12);
+    }
+
+    .badge--fk {
+      color: var(--fk);
+      background: rgba(56, 189, 248, .12);
+    }
+
+    .badge--req {
+      color: var(--req);
+      background: rgba(244, 114, 182, .10);
+    }
+
+    /* ── Icon Colors per Entity ──────────────────────── */
+    .icon--user {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: #fff;
+    }
+
+    .icon--property {
+      background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+      color: #fff;
+    }
+
+    .icon--appt {
+      background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+      color: #fff;
+    }
+
+    .icon--stats {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      color: #fff;
+    }
+
+    .icon--form {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: #fff;
+    }
+
+    .icon--news {
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      color: #fff;
+    }
+
+    /* ── Relationship Label ──────────────────────────── */
+    .rel-label {
+      position: absolute;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .2rem .55rem;
+      font-size: .65rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--fk);
+      white-space: nowrap;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* ── Positioning ─────────────────────────────────── */
+    #user {
+      top: 20px;
+      left: calc(50% - 145px);
+    }
+
+    #property {
+      top: 380px;
+      left: 60px;
+    }
+
+    #appointment {
+      top: 380px;
+      right: 60px;
+      left: auto;
+    }
+
+    #form {
+      top: 1050px;
+      left: 60px;
+    }
+
+    #stats {
+      top: 1050px;
+      left: calc(50% - 145px);
+    }
+
+    #news {
+      top: 1050px;
+      right: 60px;
+      left: auto;
+    }
+
+    /* ── SVG relationship lines ──────────────────────── */
+    .rel-line {
+      stroke: var(--fk);
+      stroke-width: 1.8;
+      fill: none;
+      opacity: .45;
+      stroke-dasharray: 6 4;
+      animation: dash-flow 1.5s linear infinite;
+    }
+
+    @keyframes dash-flow {
+      to {
+        stroke-dashoffset: -20;
+      }
+    }
+
+    .rel-dot {
+      fill: var(--fk);
+      opacity: .7;
+    }
+
+    .rel-diamond {
+      fill: none;
+      stroke: var(--fk);
+      stroke-width: 1.5;
+      opacity: .7;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    .footer {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 2rem 1rem 3rem;
+      color: var(--text-dim);
+      font-size: .75rem;
+    }
+
+    .footer span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ── Embedded-object sub-section ─────────────────── */
+    .field--sub {
+      padding-left: 2rem;
+      opacity: .85;
+    }
+
+    .field__sub-indicator {
+      color: var(--text-dim);
+      font-size: .65rem;
+      margin-right: -.15rem;
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .entity {
+        width: 270px;
+      }
+
+      #user {
+        left: calc(50% - 135px);
+      }
+
+      #property {
+        left: 15px;
+      }
+
+      #appointment {
+        right: 15px;
+        left: auto;
+      }
+
+      #form {
+        left: 15px;
+      }
+
+      #stats {
+        left: calc(50% - 135px);
+      }
+
+      #news {
+        right: 15px;
+        left: auto;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .canvas-wrapper {
+        min-height: 3600px;
+      }
+
+      .entity {
+        width: 80%;
+        max-width: 360px;
+        left: calc(50% - min(180px, 40%)) !important;
+        right: auto !important;
+      }
+
+      #user {
+        top: 20px !important;
+      }
+
+      #property {
+        top: 380px !important;
+      }
+
+      #appointment {
+        top: 1020px !important;
+      }
+
+      #form {
+        top: 1620px !important;
+      }
+
+      #stats {
+        top: 1900px !important;
+      }
+
+      #news {
+        top: 2600px !important;
+      }
+
+      .canvas-wrapper svg.lines {
+        display: none;
+      }
+
+      .rel-label {
+        display: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .canvas-wrapper {
+        min-height: auto;
+      }
+
+      .entity {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100%;
+        max-width: 360px;
+        margin: 1rem auto;
+      }
+
+      .canvas-wrapper svg.lines {
+        display: none;
+      }
+
+      .rel-label {
+        display: none;
+      }
+    }
+
+    /* ── Cardinality indicators ──────────────────────── */
+    .card-label {
+      font-size: .72rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      fill: var(--fk);
+      opacity: .8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══ Header ═══ -->
+  <header class="header">
+    <h1>Entity Relationship Diagram</h1>
+  </header>
+
+  <!-- ═══ Legend ═══ -->
+  <nav class="legend" aria-label="Diagram legend">
+    <div class="legend__item">
+      <div class="legend__dot" style="background:var(--pk)"></div> Primary Key
+    </div>
+    <div class="legend__item">
+      <div class="legend__dot" style="background:var(--fk)"></div> Foreign Key
+    </div>
+    <div class="legend__item">
+      <div class="legend__dot" style="background:var(--req)"></div> Required
+    </div>
+    <div class="legend__item">
+      <div class="legend__dot" style="background:var(--text-dim)"></div> Optional
+    </div>
+    <div class="legend__item">
+      <div class="legend__dot" style="background:var(--green)"></div> Enum
+    </div>
+    <div class="legend__item">
+      <svg width="28" height="10">
+        <line x1="0" y1="5" x2="28" y2="5" stroke="var(--fk)" stroke-width="1.8" stroke-dasharray="4 3" opacity=".6" />
+      </svg>
+      Relationship
+    </div>
+  </nav>
+
+  <!-- ═══ Diagram Canvas ═══ -->
+  <div class="canvas-wrapper" id="canvas">
+
+    <!-- ─── SVG Relationship Lines (drawn via JS) ─── -->
+    <svg class="lines" id="svg-lines"></svg>
+
+    <!-- ╔═══════════════════════════════════════╗
+         ║            USER  (center top)         ║
+         ╚═══════════════════════════════════════╝ -->
+    <div class="entity" id="user">
+      <div class="entity__header">
+        <div class="entity__icon icon--user">👤</div>
+        <div>
+          <div class="entity__name">User</div>
+          <div class="entity__collection">users</div>
+        </div>
+      </div>
+      <div class="entity__fields">
+        <div class="field">
+          <div class="field__key-icon">🔑</div>
+          <div class="field__name">_id</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--pk">PK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">name</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">email</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">UNQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">password</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">role</div>
+          <div class="field__type">String</div>
+          <span class="field__badge" style="color:var(--green);background:rgba(52,211,153,.1)">ENUM</span>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">isActive</div>
+          <div class="field__type">Boolean</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">resetToken</div>
+          <div class="field__type">String</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">resetTokenExpire</div>
+          <div class="field__type">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔═══════════════════════════════════════╗
+         ║         PROPERTY  (mid-left)          ║
+         ╚═══════════════════════════════════════╝ -->
+    <div class="entity" id="property">
+      <div class="entity__header">
+        <div class="entity__icon icon--property">🏠</div>
+        <div>
+          <div class="entity__name">Property</div>
+          <div class="entity__collection">properties</div>
+        </div>
+      </div>
+      <div class="entity__fields">
+        <div class="field">
+          <div class="field__key-icon">🔑</div>
+          <div class="field__name">_id</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--pk">PK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon">🔗</div>
+          <div class="field__name">userId</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--fk">FK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">title</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">location</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">price</div>
+          <div class="field__type">Number</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">image</div>
+          <div class="field__type">[String]</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">beds</div>
+          <div class="field__type">Number</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">baths</div>
+          <div class="field__type">Number</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">sqft</div>
+          <div class="field__type">Number</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">type</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">availability</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">description</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">amenities</div>
+          <div class="field__type">Array</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">phone</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">createdAt</div>
+          <div class="field__type">Date</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">updatedAt</div>
+          <div class="field__type">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔═══════════════════════════════════════╗
+         ║       APPOINTMENT  (mid-right)        ║
+         ╚═══════════════════════════════════════╝ -->
+    <div class="entity" id="appointment">
+      <div class="entity__header">
+        <div class="entity__icon icon--appt">📅</div>
+        <div>
+          <div class="entity__name">Client Meetings</div>
+          <div class="entity__collection">Client Meetings</div>
+        </div>
+      </div>
+      <div class="entity__fields">
+        <div class="field">
+          <div class="field__key-icon">🔑</div>
+          <div class="field__name">_id</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--pk">PK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon">🔗</div>
+          <div class="field__name">propertyId</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--fk">FK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon">🔗</div>
+          <div class="field__name">userId</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--fk">FK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">date</div>
+          <div class="field__type">Date</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">time</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">status</div>
+          <div class="field__type">String</div>
+          <span class="field__badge" style="color:var(--green);background:rgba(52,211,153,.1)">ENUM</span>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">meetingLink</div>
+          <div class="field__type">String</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">notes</div>
+          <div class="field__type">String</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">createdAt</div>
+          <div class="field__type">Date</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">updatedAt</div>
+          <div class="field__type">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔═══════════════════════════════════════╗
+         ║          STATS  (bottom-center)       ║
+         ╚═══════════════════════════════════════╝ -->
+    <div class="entity" id="stats">
+      <div class="entity__header">
+        <div class="entity__icon icon--stats">📊</div>
+        <div>
+          <div class="entity__name">Stats</div>
+          <div class="entity__collection">stats</div>
+        </div>
+      </div>
+      <div class="entity__fields">
+        <div class="field">
+          <div class="field__key-icon">🔑</div>
+          <div class="field__name">_id</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--pk">PK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon">🔗</div>
+          <div class="field__name">propertyId</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--fk">FK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon">🔗</div>
+          <div class="field__name">userId</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--fk">FK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">method</div>
+          <div class="field__type">String</div>
+          <span class="field__badge" style="color:var(--green);background:rgba(52,211,153,.1)">ENUM</span>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">timestamp</div>
+          <div class="field__type">Date</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">responseTime</div>
+          <div class="field__type">Number</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">statusCode</div>
+          <div class="field__type">Number</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">createdAt</div>
+          <div class="field__type">Date</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">updatedAt</div>
+          <div class="field__type">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔═══════════════════════════════════════╗
+         ║        FORM  (bottom-left)            ║
+         ╚═══════════════════════════════════════╝ -->
+    <div class="entity" id="form">
+      <div class="entity__header">
+        <div class="entity__icon icon--form">📝</div>
+        <div>
+          <div class="entity__name">Form</div>
+          <div class="entity__collection">forms</div>
+        </div>
+      </div>
+      <div class="entity__fields">
+        <div class="field">
+          <div class="field__key-icon">🔑</div>
+          <div class="field__name">_id</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--pk">PK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">name</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">email</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">phone</div>
+          <div class="field__type">String</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">message</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">createdAt</div>
+          <div class="field__type">Date</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">updatedAt</div>
+          <div class="field__type">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔═══════════════════════════════════════╗
+         ║       NEWS  (bottom-right)            ║
+         ╚═══════════════════════════════════════╝ -->
+    <!-- <div class="entity" id="news">
+      <div class="entity__header">
+        <div class="entity__icon icon--news">📰</div>
+        <div>
+          <div class="entity__name">News</div>
+          <div class="entity__collection">news</div>
+        </div>
+      </div>
+      <div class="entity__fields">
+        <div class="field">
+          <div class="field__key-icon">🔑</div>
+          <div class="field__name">_id</div>
+          <div class="field__type">ObjectId</div>
+          <div class="field__badge badge--pk">PK</div>
+        </div>
+        <div class="field">
+          <div class="field__key-icon"></div>
+          <div class="field__name">email</div>
+          <div class="field__type">String</div>
+          <div class="field__badge badge--req">REQ</div>
+        </div>
+      </div>
+    </div> -->
+
+    <!-- ─── Relationship labels ─── -->
+    <div class="rel-label" id="lbl-user-property">1 : N</div>
+    <div class="rel-label" id="lbl-user-appointment">1 : N</div>
+    <div class="rel-label" id="lbl-property-appointment">1 : N</div>
+    <div class="rel-label" id="lbl-user-stats">1 : N</div>
+    <div class="rel-label" id="lbl-property-stats">1 : N</div>
+
+  </div><!-- / canvas-wrapper -->
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    <span>Propertia</span> &mdash; Entity Relationship Diagram &middot; 6 Collections &middot; 5 Relationships &middot;
+    Generated from Mongoose Models
+  </footer>
+
+  <!-- ═══ JavaScript: Draw SVG connector lines ═══ -->
+  <script>
+    function getAnchor(el, side) {
+      const r = el.getBoundingClientRect();
+      const c = document.getElementById('canvas').getBoundingClientRect();
+      const ox = -c.left, oy = -c.top;
+
+      switch (side) {
+        case 'top': return { x: r.left + r.width / 2 + ox, y: r.top + oy };
+        case 'bottom': return { x: r.left + r.width / 2 + ox, y: r.bottom + oy };
+        case 'left': return { x: r.left + ox, y: r.top + r.height / 2 + oy };
+        case 'right': return { x: r.right + ox, y: r.top + r.height / 2 + oy };
+      }
+    }
+
+    function makeSVG(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      return el;
+    }
+
+    function drawLine(svg, from, to, labelEl) {
+      // Cubic bezier
+      const mx = (from.x + to.x) / 2;
+      const my = (from.y + to.y) / 2;
+
+      const dx = Math.abs(to.x - from.x);
+      const dy = Math.abs(to.y - from.y);
+
+      let d;
+      if (dy > dx) {
+        // More vertical — bend control points horizontally
+        const cy1 = from.y + (to.y - from.y) * 0.35;
+        const cy2 = from.y + (to.y - from.y) * 0.65;
+        d = `M${from.x},${from.y} C${from.x},${cy1} ${to.x},${cy2} ${to.x},${to.y}`;
+      } else {
+        // More horizontal — bend control points vertically
+        const cx1 = from.x + (to.x - from.x) * 0.35;
+        const cx2 = from.x + (to.x - from.x) * 0.65;
+        d = `M${from.x},${from.y} C${cx1},${from.y} ${cx2},${to.y} ${to.x},${to.y}`;
+      }
+
+      const path = makeSVG('path', { d, class: 'rel-line' });
+      svg.appendChild(path);
+
+      // Start dot (the "1" side)
+      svg.appendChild(makeSVG('circle', { cx: from.x, cy: from.y, r: 4, class: 'rel-dot' }));
+      // End dot (the "N" side) — diamond
+      const size = 6;
+      const dp = `M${to.x},${to.y - size} L${to.x + size},${to.y} L${to.x},${to.y + size} L${to.x - size},${to.y} Z`;
+      svg.appendChild(makeSVG('path', { d: dp, class: 'rel-diamond' }));
+
+      // Cardinality text
+      svg.appendChild(makeSVG('text', { x: from.x + 12, y: from.y - 8, class: 'card-label' })).textContent = '1';
+      svg.appendChild(makeSVG('text', { x: to.x + 12, y: to.y - 8, class: 'card-label' })).textContent = 'N';
+
+      // Position the floating label
+      if (labelEl) {
+        const canvasR = document.getElementById('canvas').getBoundingClientRect();
+        labelEl.style.left = (mx - 18) + 'px';
+        labelEl.style.top = (my - 10) + 'px';
+      }
+    }
+
+    function render() {
+      const svg = document.getElementById('svg-lines');
+      svg.innerHTML = '';
+
+      // User → Property  (User.bottom → Property.top)
+      drawLine(svg,
+        getAnchor(document.getElementById('user'), 'bottom'),
+        getAnchor(document.getElementById('property'), 'top'),
+        document.getElementById('lbl-user-property')
+      );
+
+      // User → Appointment  (User.bottom → Appointment.top)
+      drawLine(svg,
+        getAnchor(document.getElementById('user'), 'bottom'),
+        getAnchor(document.getElementById('appointment'), 'top'),
+        document.getElementById('lbl-user-appointment')
+      );
+
+      // Property → Appointment  (Property.right → Appointment.left)
+      drawLine(svg,
+        getAnchor(document.getElementById('property'), 'right'),
+        getAnchor(document.getElementById('appointment'), 'left'),
+        document.getElementById('lbl-property-appointment')
+      );
+
+      // User → Stats  (Stats refs User)
+      drawLine(svg,
+        getAnchor(document.getElementById('user'), 'bottom'),
+        getAnchor(document.getElementById('stats'), 'top'),
+        document.getElementById('lbl-user-stats')
+      );
+
+      // Property → Stats  (Stats refs Property)
+      drawLine(svg,
+        getAnchor(document.getElementById('property'), 'bottom'),
+        getAnchor(document.getElementById('stats'), 'left'),
+        document.getElementById('lbl-property-stats')
+      );
+    }
+
+    // Initial + resize
+    window.addEventListener('load', () => { setTimeout(render, 100); });
+    window.addEventListener('resize', render);
+  </script>
+
+</body>
+
+</html>

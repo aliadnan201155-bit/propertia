@@ -880,13 +880,33 @@ export const adminUpdateAppointment = async (req, res) => {
       }
     }
 
+    // Fetch the old appointment to check if status changed
+    const oldAppointment = await Appointment.findById(req.params.id).populate('propertyId userId');
+    const oldStatus = oldAppointment ? oldAppointment.status : null;
+
     const appointment = await Appointment.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
-    });
+    }).populate('propertyId userId');
 
     if (!appointment) {
       return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    // Send email to the requester if status has changed
+    if (updates.status && updates.status !== oldStatus && appointment.userId && appointment.userId.email) {
+      try {
+        const mailOptions = {
+          from: process.env.EMAIL,
+          to: appointment.userId.email,
+          subject: `Viewing Appointment ${updates.status.charAt(0).toUpperCase() + updates.status.slice(1)} - Propertia`,
+          html: getEmailTemplate(appointment, updates.status),
+        };
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Email sent to ${appointment.userId.email} for status: ${updates.status}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send appointment status email:', emailError);
+      }
     }
 
     return res.json({

@@ -15,6 +15,16 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
   const [step, setStep] = useState(1); // Add step-based UI (1: date/time, 2: notes, 3: confirmation)
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Convert 24-hour time string to 12-hour AM/PM label
+  const formatTimeLabel = (time) => {
+    const [hourStr, minuteStr] = time.split(':');
+    let hour = parseInt(hourStr, 10);
+    const minute = minuteStr;
+    const period = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12;
+    return `${hour}:${minute} ${period}`;
+  };
+
   // Available time slots from 9 AM to 6 PM
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -25,27 +35,29 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
     return slots;
   }, []);
 
-  // Calculate date restrictions
+  // Calculate date restrictions using LOCAL date (not UTC) to avoid timezone issues
   const dateRestrictions = useMemo(() => {
     const today = new Date();
     const maxDate = new Date();
     maxDate.setDate(today.getDate() + 30);
-    
-    // Set time to beginning of day for accurate comparison
-    today.setHours(0, 0, 0, 0);
-    
+
+    // Use local year/month/day to avoid UTC shift issues (e.g. PKT UTC+5)
+    const pad = (n) => String(n).padStart(2, '0');
+    const toLocalDateString = (d) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
     return {
-      min: today.toISOString().split('T')[0],
-      max: maxDate.toISOString().split('T')[0]
+      min: toLocalDateString(today),
+      max: toLocalDateString(maxDate),
     };
   }, []);
 
   const isPastTime = (time) => {
     const [hours, minutes] = time.split(':').map(Number);
     const now = new Date();
-    const selected = new Date(formData.date);
-    selected.setHours(hours, minutes);
-
+    // Parse date string as LOCAL date (not UTC) to avoid timezone shift
+    const [year, month, day] = formData.date.split('-').map(Number);
+    const selected = new Date(year, month - 1, day, hours, minutes);
     return selected < now;
   };
 
@@ -71,14 +83,14 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
         toast.error('Please login to schedule a viewing');
         return;
       }
-    
+
       setLoading(true);
       const response = await axios.post(
-        `${Backendurl}/api/appointments/schedule`, 
+        `${Backendurl}/api/appointments/schedule`,
         {
           propertyId,
           ...formData
-        }, 
+        },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -86,7 +98,7 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
           }
         }
       );
-  
+
       if (response.data.success) {
         setIsSuccess(true);
       }
@@ -138,9 +150,9 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
               <div className="flex items-center mb-4 pb-3 border-b border-gray-100">
                 {propertyImage && (
                   <div className="mr-4 flex-shrink-0">
-                    <img 
-                      src={propertyImage} 
-                      alt={propertyTitle} 
+                    <img
+                      src={propertyImage}
+                      alt={propertyTitle}
                       className="w-16 h-16 object-cover rounded-lg"
                     />
                   </div>
@@ -225,12 +237,12 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
                         >
                           <option value="">Choose a time slot</option>
                           {timeSlots.map((slot) => (
-                            <option 
-                              key={slot} 
+                            <option
+                              key={slot}
                               value={slot}
                               disabled={formData.date === dateRestrictions.min && isPastTime(slot)}
                             >
-                              {slot}
+                              {formatTimeLabel(slot)}
                             </option>
                           ))}
                         </select>
@@ -271,8 +283,8 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
                     <div className="bg-blue-50 rounded-lg p-4 mb-4">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="text-sm font-medium text-gray-900">Selected Time</h3>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => setStep(1)}
                           className="text-xs text-blue-600 hover:text-blue-800"
                         >
@@ -343,12 +355,12 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              
+
               <h3 className="text-xl font-bold text-gray-900 mb-2">Viewing Scheduled!</h3>
               <p className="text-gray-600 mb-6">
                 We've sent you a confirmation email with all the details.
               </p>
-              
+
               <div className="bg-blue-50 rounded-lg p-4 max-w-xs mx-auto mb-6">
                 <div className="flex items-center mb-2">
                   <Calendar className="w-4 h-4 text-blue-600 mr-2" />
@@ -365,11 +377,11 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
                   </div>
                 )}
               </div>
-              
+
               <p className="text-sm text-gray-500 mb-6">
                 For any help or assistance, please contact our support team via the contact page.
               </p>
-              
+
               <button
                 onClick={onClose}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
@@ -378,8 +390,8 @@ const ScheduleViewing = ({ propertyId, propertyTitle, propertyLocation, property
               </button>
             </motion.div>
           )}
-          
-         
+
+
         </motion.div>
       </motion.div>
     </AnimatePresence>

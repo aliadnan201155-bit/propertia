@@ -66,7 +66,7 @@ const PropertyForm = () => {
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length + previewUrls.length > 4) {
-      alert('Maximum 4 images allowed');
+      toast.error('Maximum 4 images allowed');
       return;
     }
     const newPreviewUrls = files.map(file => URL.createObjectURL(file));
@@ -285,10 +285,16 @@ const PropertyForm = () => {
                     required
                     min="0"
                     value={formData.price}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (value.length <= 12) {
+                        handleInputChange(e);
+                    }
+                  }}
                     placeholder="0"
                   />
-                </div>
+                </div> 
 
               </div>
             </div>
@@ -306,7 +312,13 @@ const PropertyForm = () => {
                     required
                     min="0"
                     value={formData.beds}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (value.length <= 2) {
+                        handleInputChange(e);
+                    }
+                  }}
                     placeholder="0"
                   />
                 </div>
@@ -319,7 +331,13 @@ const PropertyForm = () => {
                     required
                     min="0"
                     value={formData.baths}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (value.length <= 2) {
+                        handleInputChange(e);
+                    }
+                  }}  
                     placeholder="0"
                   />
                 </div>
@@ -332,7 +350,13 @@ const PropertyForm = () => {
                     required
                     min="0"
                     value={formData.sqft}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (value.length <= 6) {
+                        handleInputChange(e);
+                    }
+                  }}
                     placeholder="0"
                   />
                 </div>

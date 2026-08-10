@@ -10,22 +10,56 @@ let availableLocations = [];
 // ═════════════════════════════════════════════════════════════════════════════
 
 const AMENITY_MAP = {
-    'swimming pool': ['pool', 'swim', 'swimming'],
-    'home theater': ['theater', 'theatre', 'cinema', 'movie room'],
-    'gym': ['gym', 'gymnasium', 'fitness', 'workout', 'exercise room'],
-    'parking': ['parking', 'garage', 'car park', 'parking space'],
-    'garden': ['garden', 'yard', 'lawn', 'backyard'],
-    'security': ['security', 'guard', 'cctv', 'surveillance', 'gated'],
+    // Water & Recreation
+    'swimming pool': ['pool', 'swim', 'swimming', 'swimming pool'],
+    'spa': ['spa', 'jacuzzi', 'hot tub', 'sauna', 'steam room', 'steam bath'],
+    'barbeque': ['barbeque', 'barbecue', 'bbq', 'barbeque area', 'bbq area', 'grilling area'],
+    // Entertainment
+    'home theater': ['theater', 'theatre', 'cinema', 'movie room', 'screening room'],
+    'fireplace': ['fireplace', 'fire place', 'chimney', 'hearth', 'mantle'],
+    // Fitness
+    'gym': ['gym', 'gymnasium', 'fitness', 'workout', 'exercise room', 'fitness center', 'fitness centre'],
+    'tennis court': ['tennis', 'tennis court', 'squash', 'squash court'],
+    'basketball court': ['basketball', 'basketball court', 'sports court'],
+    'jogging track': ['jogging', 'jogging track', 'running track', 'walking track'],
+    // Parking & Access
+    'parking': ['parking', 'garage', 'car park', 'parking space', 'car garage', 'covered parking'],
     'elevator': ['elevator', 'lift'],
+    // Outdoor & Views
+    'garden': ['garden', 'yard', 'lawn', 'backyard', 'front yard'],
     'balcony': ['balcony', 'terrace', 'patio', 'veranda'],
-    'generator': ['generator', 'backup power', 'ups', 'genset'],
-    'solar panels': ['solar', 'solar panels', 'solar energy'],
-    'internet': ['internet', 'wifi', 'wi-fi', 'broadband', 'fiber'],
-    'air conditioning': ['ac', 'air conditioning', 'air conditioner', 'cooling'],
-    'central heating': ['heating', 'heater', 'central heating'],
-    'store room': ['store room', 'storage', 'storeroom'],
-    'servant quarters': ['servant quarters', 'servant room', 'maid room'],
-    'rooftop': ['rooftop', 'roof top', 'roof access'],
+    'rooftop': ['rooftop', 'roof top', 'roof access', 'rooftop access'],
+    'lake view': ['lake view', 'lakefront', 'water view', 'sea view', 'ocean view', 'river view', 'lake'],
+    'kids play area': ['play area', 'kids area', 'playground', 'children area', 'kids play'],
+    // Security
+    'security': ['security', 'guard', 'cctv', 'surveillance', 'gated', 'security staff', 'security guard', 'gated community'],
+    // Power & Utilities
+    'generator': ['generator', 'backup power', 'ups', 'genset', 'electricity backup', 'power backup', 'backup electricity'],
+    'solar panels': ['solar', 'solar panels', 'solar energy', 'solar power'],
+    'gas': ['gas', 'piped gas', 'natural gas', 'gas connection'],
+    'water supply': ['water supply', 'water tank', 'borehole', 'water filtration', 'water filter'],
+    // Connectivity
+    'internet': ['internet', 'wifi', 'wi-fi', 'broadband', 'fiber', 'optical fiber'],
+    // Climate
+    'air conditioning': ['ac', 'air conditioning', 'air conditioner', 'cooling', 'central ac', 'split ac'],
+    'central heating': ['heating', 'heater', 'central heating', 'gas heater'],
+    // Rooms & Spaces
+    'store room': ['store room', 'storage', 'storeroom', 'storage room'],
+    'servant quarters': ['servant quarters', 'servant room', 'maid room', 'staff quarters', 'domestic staff'],
+    'master bathroom': ['master bathroom', 'master bath', 'en suite', 'ensuite', 'attached bathroom'],
+    'study room': ['study room', 'study', 'office room', 'home office', 'library', 'reading room'],
+    'laundry': ['laundry', 'laundry room', 'washing machine', 'dryer', 'utility room'],
+    'basement': ['basement', 'underground', 'cellar', 'lower ground'],
+    // Interior & Furnishing
+    'furnished': ['furnished', 'fully furnished', 'semi furnished', 'semi-furnished'],
+    'double glazed': ['double glazed', 'double glazed windows', 'soundproof windows', 'insulated windows'],
+    // Smart & Modern
+    'smart home': ['smart home', 'home automation', 'smart system', 'automated home', 'smart device'],
+    // Staff & Services
+    'maintenance': ['maintenance', 'maintenance staff', 'caretaker', 'facility management'],
+    'concierge': ['concierge', 'reception', 'front desk'],
+    // Waste
+    'waste disposal': ['waste disposal', 'garbage', 'waste management', 'recycling', 'garbage collection'],
 };
 
 const CONTACT = { phone: '+92 (021) 567-567', email: 'support@propertia.com' };
@@ -42,6 +76,17 @@ function resolveAmenity(keyword) {
         }
     }
     return lower;
+}
+
+// Builds a regex that matches the canonical amenity name AND all its synonyms
+// Used for BOTH include and exclude queries
+// e.g. 'pool' → /swimming pool|pool|swim|swimming/i
+// This ensures DB values like "Pool" or "Swimming Pool" are all caught
+function buildAmenityRegex(canonical) {
+    const synonyms = AMENITY_MAP[canonical] || [];
+    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = [canonical, ...synonyms].map(escape);
+    return new RegExp(parts.join('|'), 'i');
 }
 
 function buildLocationPatterns(locationStr) {
@@ -189,9 +234,12 @@ queryType — exactly ONE of:
   "UNKNOWN" → gibberish, random text, nonsense, unrelated non-property queries, anything that doesn't fit other types
   "COUNT" → how many properties, total listings, kitne hain
   "EXTREME" → most expensive, cheapest, biggest, smallest, sabse mehnga, sabse sasta
-  "SEARCH" → any property search with filters
-  "RECOMMEND" → show me something, suggest me, recommend, kuch dikhao
+  "SEARCH" → any property search with filters (location, type, price, beds, amenities, availability, etc.)
+  "RECOMMEND" → ONLY use when user asks for suggestions/recommendations with NO specific filters (e.g. "show me something", "suggest me a property", "kuch dikhao"). If user mentions ANY filter (amenity include/exclude, location, price, type, beds) use SEARCH instead.
   "INFO" → what can you do, how does this work, help
+
+CRITICAL: "show me properties without pool", "dikhao without gym", "show me houses without fireplace" → queryType=SEARCH with amenitiesExclude set. NOT RECOMMEND.
+CRITICAL: "show me properties with pool" → queryType=SEARCH with amenitiesInclude set. NOT RECOMMEND.
 
 language — detect user's language:
   "english" | "roman_urdu" | "mixed"
@@ -306,9 +354,9 @@ async function handleGreeting(intent) {
 
 async function handleFarewell(intent) {
     const farewells = {
-        english: `👋 Goodbye! Thank you for using PropX! 🏠\n\nWe hope we helped you find what you were looking for. Come back anytime!\n\n📞 Need help later? Call us at **${CONTACT.phone}**`,
-        roman_urdu: `👋 Allah Hafiz! PropX use karne ka shukriya! 🏠\n\nUmeed hai humne aapki madad ki hogi. Kabhi bhi wapas aayein!\n\n📞 Baad mein madad chahiye? Call karein: **${CONTACT.phone}**`,
-        mixed: `👋 Allah Hafiz! Thank you for using PropX! 🏠\n\nUmeed hai aapko apni pasand ki property mili hogi. Come back anytime!\n\n📞 Need help later? Call karein: **${CONTACT.phone}**`
+        english: `👋 Goodbye! Thank you for using PropX! 🏠\n\nWe hope we helped you find what you were looking for. Come back anytime!\n\n📞 Need help later? Call us at ${CONTACT.phone}`,
+        roman_urdu: `👋 Allah Hafiz! PropX use karne ka shukriya! 🏠\n\nUmeed hai humne aapki madad ki hogi. Kabhi bhi wapas aayein!\n\n📞 Baad mein madad chahiye? Call karein: ${CONTACT.phone}`,
+        mixed: `👋 Allah Hafiz! Thank you for using PropX! 🏠\n\nUmeed hai aapko apni pasand ki property mili hogi. Come back anytime!\n\n📞 Need help later? Call karein: ${CONTACT.phone}`
     };
     return { success: true, reply: farewells[intent.language] || farewells.mixed };
 }
@@ -318,9 +366,9 @@ async function handleCount(intent) {
     const count = await Property.countDocuments(query);
 
     const replies = {
-        english: `📊 I found **${count} properties** matching your criteria.`,
-        roman_urdu: `📊 Aapki criteria ke mutabiq **${count} properties** mili hain.`,
-        mixed: `📊 I found **${count} properties** aapki criteria ke mutabiq.`
+        english: `📊 I found ${count} properties matching your criteria.`,
+        roman_urdu: `📊 Aapki criteria ke mutabiq ${count} properties mili hain.`,
+        mixed: `📊 I found ${count} properties aapki criteria ke mutabiq.`
     };
 
     return { success: true, reply: replies[intent.language] || replies.mixed, count };
@@ -357,8 +405,12 @@ async function handleExtreme(intent) {
 }
 
 async function handleRecommend(intent) {
-    // Recommendation: return diverse mix (rent+buy, different types, price ranges)
-    const results = await Property.find({})
+    // If user specified any amenity filters, use full search query to respect them
+    // Otherwise return a general diverse mix
+    const hasAnyFilter = !hasNoFilters(intent);
+    const query = hasAnyFilter ? buildSearchQuery(intent) : {};
+
+    const results = await Property.find(query)
         .populate('userId', 'name email')
         .sort({ createdAt: -1 })
         .limit(6)
@@ -496,19 +548,24 @@ function buildSearchQuery(intent) {
         query.price = { $gte: intent.minPrice };
     }
 
-    // Amenities include (AND logic — must have ALL)
+    // Amenities include (AND logic — must have ALL specified amenities)
+    // Uses synonym-aware regex so "Pool" matches both "swimming pool" canonical and "pool" synonym
     if (intent.amenitiesInclude && intent.amenitiesInclude.length > 0) {
         const resolved = [...new Set(intent.amenitiesInclude.map(resolveAmenity))];
-        resolved.forEach(a => {
-            andConditions.push({ amenities: { $elemMatch: { $regex: a, $options: 'i' } } });
+        resolved.forEach(canonical => {
+            const regex = buildAmenityRegex(canonical);
+            // $elemMatch checks if any element in the array matches the regex
+            andConditions.push({ amenities: { $elemMatch: { $regex: regex.source, $options: 'i' } } });
         });
     }
 
-    // Amenities exclude (AND logic — must NOT have ANY)
+    // Amenities exclude (AND logic — must NOT have ANY of the specified amenities)
+    // Uses synonym-aware regex so "Pool" matches both "swimming pool" canonical and "pool" synonym
     if (intent.amenitiesExclude && intent.amenitiesExclude.length > 0) {
         const resolved = [...new Set(intent.amenitiesExclude.map(resolveAmenity))];
-        resolved.forEach(a => {
-            andConditions.push({ amenities: { $not: { $elemMatch: { $regex: a, $options: 'i' } } } });
+        resolved.forEach(canonical => {
+            const regex = buildAmenityRegex(canonical);
+            andConditions.push({ amenities: { $not: regex } });
         });
     }
 
@@ -520,14 +577,38 @@ function buildSearchQuery(intent) {
 }
 
 function buildRelaxedQuery(intent) {
-    // Relaxed: only location + type + availability
+    // Relaxed: only location + type + availability + amenity exclusions (exclusions are always kept!)
     const query = {};
+    const andConditions = [];
+
     if (intent.location) {
         const patterns = buildLocationPatterns(intent.location);
         if (patterns.length > 0) query.$or = patterns.flatMap(p => p.$or);
     }
     if (intent.propertyType) query.type = { $regex: intent.propertyType, $options: 'i' };
     if (intent.availability) query.availability = { $regex: intent.availability, $options: 'i' };
+
+    // Always respect amenity inclusions & exclusions even in relaxed mode
+    if (intent.amenitiesInclude && intent.amenitiesInclude.length > 0) {
+        const resolved = [...new Set(intent.amenitiesInclude.map(resolveAmenity))];
+        resolved.forEach(canonical => {
+            const regex = buildAmenityRegex(canonical);
+            andConditions.push({ amenities: { $elemMatch: { $regex: regex.source, $options: 'i' } } });
+        });
+    }
+
+    if (intent.amenitiesExclude && intent.amenitiesExclude.length > 0) {
+        const resolved = [...new Set(intent.amenitiesExclude.map(resolveAmenity))];
+        resolved.forEach(canonical => {
+            const regex = buildAmenityRegex(canonical);
+            andConditions.push({ amenities: { $not: regex } });
+        });
+    }
+
+    if (andConditions.length > 0) {
+        query.$and = andConditions;
+    }
+
     return query;
 }
 
@@ -659,7 +740,7 @@ export const chat = async (req, res) => {
             case 'INFO':
                 response = {
                     success: true,
-                    reply: `🤝 I can help you find properties! Just tell me:\n\n📍 **Location** — "in DHA", "Emaar", "Bahria Town"\n🏠 **Type** — House, Apartment, Office, Villa\n💰 **Budget** — "under 50 lakh", "1 crore se zyada"\n🛏️ **Bedrooms** — "2 bedroom", "3 se zyada beds"\n🚿 **Bathrooms** — "2 bathrooms"\n📐 **Size** — "500 sqft", "bari jagah wali"\n🏊 **Amenities** — "with pool", "gym aur parking"\n💎 **Sort** — "cheapest", "biggest", "newest"\n\n📞 Need help? WhatsApp: **${CONTACT.phone}**`
+                    reply: `🤝 I can help you find properties! Just tell me:\n\n📍 Location — "in DHA", "Emaar", "Bahria Town"\n🏠 Type — House, Apartment, Office, Villa\n💰 Budget — "under 50 lakh", "1 crore se zyada"\n🛏️ Bedrooms — "2 bedroom", "3 se zyada beds"\n🚿 Bathrooms — "2 bathrooms"\n📐 Size — "500 sqft", "bari jagah wali"\n🏊 Amenities — "with pool", "gym aur parking"\n💎 Sort — "cheapest", "biggest", "newest"\n\n📞 Need help? WhatsApp: ${CONTACT.phone}`
                 };
                 break;
             default:  // SEARCH

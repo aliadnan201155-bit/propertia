@@ -303,17 +303,17 @@ const Dashboard = () => {
           change: "+12%",
           changeType: "positive",
         },
-        {
-          title: "Active Listings",
-          value: stats.activeListings,
-          icon: Activity,
-          color: "from-green-500 to-green-600",
-          bgColor: "bg-green-50",
-          iconColor: "text-green-600",
-          description: "Currently active listings",
-          change: "+8%",
-          changeType: "positive",
-        },
+        // {
+        //   title: "Active Listings",
+        //   value: stats.activeListings,
+        //   icon: Activity,
+        //   color: "from-green-500 to-green-600",
+        //   bgColor: "bg-green-50",
+        //   iconColor: "text-green-600",
+        //   description: "Currently active listings",
+        //   change: "+8%",
+        //   changeType: "positive",
+        // },
         {
           title: "Total Views",
           value: stats.totalViews,
@@ -453,7 +453,7 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${statCards.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-6 mb-8`}>
           {statCards.map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -706,7 +706,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Active Listing Rate */}
+              {/* Active Listing Rate
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
                 <div>
                   <p className="text-sm text-gray-600">
@@ -732,7 +732,7 @@ const Dashboard = () => {
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <Activity className="w-6 h-6 text-green-600" />
                 </div>
-              </div>
+              </div> */}
 
               {/* Appointment Conversion */}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl">

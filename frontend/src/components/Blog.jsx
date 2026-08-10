@@ -19,8 +19,8 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     scale: 1,
     transition: {
@@ -34,8 +34,8 @@ const cardVariants = {
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
       duration: 0.8,
@@ -46,7 +46,7 @@ const headerVariants = {
 
 const pulseAnimation = {
   scale: [1, 1.1, 1],
-  transition: { 
+  transition: {
     duration: 0.3,
     ease: "easeInOut"
   }
@@ -96,7 +96,7 @@ const BlogCard = ({ post }) => {
   const handleBookmark = (e) => {
     e.stopPropagation();
     setIsBookmarked(!isBookmarked);
-    
+
     if (!isBookmarked) {
       toast.success(`Saved "${post.title}" to your reading list 💾`, {
         style: { borderRadius: '12px', background: '#3B82F6', color: '#fff' }
@@ -113,7 +113,7 @@ const BlogCard = ({ post }) => {
   };
 
   const estimatedReadTime = Math.ceil(post.excerpt.split(' ').length / 200);
-  
+
   // Extract category from post (or use default)
   const category = post.category || "Real Estate";
 
@@ -121,10 +121,10 @@ const BlogCard = ({ post }) => {
     <motion.div
       className="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-blue-200 cursor-pointer transform-gpu"
       variants={cardVariants}
-      whileHover={{ 
-        y: -12, 
+      whileHover={{
+        y: -12,
         scale: 1.02,
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)" 
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
       }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -137,9 +137,9 @@ const BlogCard = ({ post }) => {
           className="w-full h-64 object-cover transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
         />
         <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-all duration-500 ${isHovered ? 'opacity-90' : 'opacity-60'}`} />
-        
+
         {/* Floating badge with animation */}
-        <motion.div 
+        <motion.div
           className="absolute top-6 left-6 z-10"
           animate={floatingAnimation}
         >
@@ -153,10 +153,10 @@ const BlogCard = ({ post }) => {
           <Eye className="w-3 h-3" />
           {views}
         </div> */}
-        
+
         <AnimatePresence>
           {isHovered && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 30, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -192,7 +192,7 @@ const BlogCard = ({ post }) => {
               <Bookmark className="w-4 h-4" />
             )}
           </motion.button> */}
-          
+
           {/* <motion.button
             whileTap={pulseAnimation}
             onClick={handleShare}
@@ -224,7 +224,7 @@ const BlogCard = ({ post }) => {
         <h3 className="text-xl font-bold text-gray-900 mb-4 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300 leading-tight">
           {post.title}
         </h3>
-        
+
         <p className="text-gray-600 mb-6 line-clamp-3 text-sm leading-relaxed">
           {post.excerpt}
         </p>
@@ -253,19 +253,19 @@ const BlogCard = ({ post }) => {
   );
 };
 
-// Main Blog component
+// Main++ Blog component
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  
+
   const categories = ['All', 'Buying', 'Selling', 'Investment', 'Tips', 'Market Trends'];
-  
+
   const filteredPosts = blogPosts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || (post.category || 'Real Estate') === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -285,7 +285,7 @@ const Blog = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <motion.div 
+          <motion.div
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6"
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -293,14 +293,14 @@ const Blog = () => {
             <TrendingUp className="w-4 h-4" />
             Latest Real Estate Insights
           </motion.div>
-          
+
           <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 relative">
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
               Expert Insights
             </span>
             <br />
             <span className="text-gray-900">& Market Updates</span>
-            <motion.div 
+            <motion.div
               className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"
               initial={{ width: 0 }}
               whileInView={{ width: 96 }}
@@ -308,20 +308,20 @@ const Blog = () => {
             />
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Stay ahead of the market with our curated collection of expert advice, 
+            Stay ahead of the market with our curated collection of expert advice,
             market trends, and insider tips for your real estate journey.
           </p>
         </motion.div>
-        
+
         {/* Enhanced Search and filter section */}
-        <motion.div 
+        <motion.div
           className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           <div className="flex flex-col lg:flex-row gap-6 justify-between items-center">
-            <div className="relative max-w-md w-full">
+            {/* <div className="relative max-w-md w-full">
               <motion.div
                 className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-105' : 'scale-100'}`}
               >
@@ -346,9 +346,9 @@ const Blog = () => {
                   </motion.button>
                 )}
               </motion.div>
-            </div>
-            
-            <div className="flex flex-wrap gap-3 justify-center lg:justify-end">
+            </div> */}
+
+            {/* <div className="flex flex-wrap gap-3 justify-center lg:justify-end">
               {categories.map((category, index) => (
                 <motion.button
                   key={category}
@@ -358,19 +358,18 @@ const Blog = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 shadow-lg ${
-                    selectedCategory === category
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/25 transform scale-105'
-                      : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
-                  }`}
+                  className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 shadow-lg ${selectedCategory === category
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/25 transform scale-105'
+                    : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
+                    }`}
                 >
                   {category}
                 </motion.button>
               ))}
-            </div>
+            </div> */}
           </div>
         </motion.div>
-        
+
         {filteredPosts.length > 0 ? (
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -416,7 +415,7 @@ const Blog = () => {
             </div>
           </motion.div>
         )}
-        
+
         {/* Enhanced View all articles button */}
         {/* <motion.div 
           className="text-center mt-20"

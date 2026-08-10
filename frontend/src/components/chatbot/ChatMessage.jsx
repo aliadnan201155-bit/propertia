@@ -3,6 +3,22 @@ import { useNavigate } from 'react-router-dom';
 
 const ChatMessage = ({ message, isUser, properties, detailedProperty, onViewDetails }) => {
   const navigate = useNavigate();
+
+  const getPropertyStatusLabel = (value) => {
+    if (!value) return 'Available';
+
+    const normalizedValue = `${value}`.toLowerCase().trim();
+
+    if (normalizedValue === 'buy' || normalizedValue === 'sale' || normalizedValue === 'for sale') {
+      return 'Sale';
+    }
+
+    if (normalizedValue === 'rent' || normalizedValue === 'for rent') {
+      return 'Rent';
+    }
+
+    return value;
+  };
   
   // 1. Agar User ki chat hai
   if (isUser) {
@@ -45,6 +61,7 @@ const ChatMessage = ({ message, isUser, properties, detailedProperty, onViewDeta
                 <p>💰 PKR {(prop.price / 1000000).toFixed(2)}M</p>
                 <p>🛏️ {prop.beds} Beds</p>
                 <p>🏠 {prop.type}</p>
+                <p>📌 {getPropertyStatusLabel(prop.availability)}</p>
               </div>
               
               {/* Magic Button: Is par click hone se poori detail aayegi */}
@@ -78,7 +95,7 @@ const ChatMessage = ({ message, isUser, properties, detailedProperty, onViewDeta
             <div><span className="font-medium text-gray-700">Baths:</span> {detailedProperty.baths || 'N/A'}</div>
             <div><span className="font-medium text-gray-700">Area:</span> {detailedProperty.sqft ? `${detailedProperty.sqft} sqft` : 'N/A'}</div>
             <div><span className="font-medium text-gray-700">Type:</span> {detailedProperty.type}</div>
-            <div><span className="font-medium text-gray-700">Status:</span> {detailedProperty.availability || 'Available'}</div>
+            <div><span className="font-medium text-gray-700">Status:</span> {getPropertyStatusLabel(detailedProperty.availability)}</div>
           </div>
 
           <div className="text-sm text-gray-700 mb-3">

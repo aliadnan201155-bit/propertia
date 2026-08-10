@@ -487,7 +487,7 @@ export const getAdminAppointmentNotificationTemplate = (appointment, user) => `
     <!-- Header with Background -->
     <div style="background: linear-gradient(135deg, #dc2626, #991b1b); padding: 40px 20px; border-radius: 15px 15px 0 0; text-align: center;">
       <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">🔔 New Appointment Request</h1>
-      <p style="color: #ffffff; opacity: 0.9; margin: 10px 0 0 0; font-size: 16px;">Action Required - Propertia Admin</p>
+      <p style="color: #ffffff; opacity: 0.9; margin: 10px 0 0 0; font-size: 16px;">Action Required</p>
     </div>
 
     <!-- Main Content -->
@@ -566,24 +566,28 @@ export const getAdminAppointmentNotificationTemplate = (appointment, user) => `
         </ul>
       </div>
 
-      <!-- Quick Action Buttons -->
-      <div style="text-align: center; margin: 35px 0;">
-        <p style="color: #6b7280; margin-bottom: 15px;">Log in to the admin dashboard to manage this appointment:</p>
-        <a href="${process.env.DASHBOARD_URL}/appointments"
-           style="display: inline-block; padding: 16px 30px; background: linear-gradient(135deg, #dc2626, #991b1b); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);">
-          Manage Appointment
-        </a>
+      <!-- Contact Support -->
+      <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px;">
+        <h3 style="color: #1e40af; margin: 0 0 15px 0; font-size: 18px;">Need Help?</h3>
+        <p style="margin: 0; color: #4b5563;">
+          Our support team is available 24/7 to assist you:
+          <br>
+          📧 <a href="mailto:support@propertia.com" style="color: #2563eb; text-decoration: none;">support@propertia.com</a>
+          <br>
+          📞 <a href="tel:+1234567890" style="color: #2563eb; text-decoration: none;">+92 (021) 567-567</a>
+        </p>
       </div>
-    </div>
+      
 
-    <!-- Footer -->
+     <!-- Footer -->
     <div style="text-align: center; margin-top: 30px;">
       <p style="color: #6b7280; font-size: 14px;">
-        © ${new Date().getFullYear()} Propertia Admin. All rights reserved.
+        © ${new Date().getFullYear()} Propertia. All rights reserved.
       </p>
       <div style="margin-top: 10px;">
         <a href="https://real-estate-website-sepia-two.vercel.app" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Website</a>
-        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Admin Dashboard</a>
+        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
+        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Terms of Service</a>
       </div>
     </div>
   </div>
@@ -798,15 +802,27 @@ export const getMeetingLinkEmailTemplate = (appointment, meetingLink) => `
 
       </div>
 
-    <!-- Footer -->
+       <!-- Contact Support -->
+      <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px;">
+        <h3 style="color: #1e40af; margin: 0 0 15px 0; font-size: 18px;">Need Help?</h3>
+        <p style="margin: 0; color: #4b5563;">
+          Our support team is available 24/7 to assist you:
+          <br>
+          📧 <a href="mailto:support@propertia.com" style="color: #2563eb; text-decoration: none;">support@propertia.com</a>
+          <br>
+          📞 <a href="tel:+1234567890" style="color: #2563eb; text-decoration: none;">+92 (021) 567-567</a>
+        </p>
+      </div>
+
+   <!-- Footer -->
     <div style="text-align: center; margin-top: 30px;">
       <p style="color: #6b7280; font-size: 14px;">
         © ${new Date().getFullYear()} Propertia. All rights reserved.
       </p>
       <div style="margin-top: 10px;">
         <a href="https://real-estate-website-sepia-two.vercel.app" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Website</a>
-        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">My Appointments</a>
-        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Contact Support</a>
+        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
+        <a href="#" style="color: #2563eb; text-decoration: none; margin: 0 10px;">Terms of Service</a>
       </div>
     </div>
   </div>
