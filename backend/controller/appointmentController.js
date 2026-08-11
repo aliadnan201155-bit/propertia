@@ -273,7 +273,6 @@ export const updateAppointmentStatus = async (req, res) => {
       };
 
       await transporter.sendMail(mailOptions);
-      console.log('📧 Status update email sent to:', recipients);
     }
 
     res.json({
@@ -352,7 +351,6 @@ export const scheduleViewing = async (req, res) => {
     };
 
     await transporter.sendMail(userMailOptions);
-    console.log('📧 Customer booking email sent to:', req.user.email);
 
     if (property.userId?.email) {
       const adminMailOptions = {
@@ -364,7 +362,7 @@ export const scheduleViewing = async (req, res) => {
 
       try {
         await transporter.sendMail(adminMailOptions);
-        console.log('📧 Property owner booking email sent to:', property.userId.email);
+        console.log('✅ Property owner notification email sent successfully');
       } catch (emailError) {
         console.error('❌ Failed to send property owner notification email:', emailError);
       }
@@ -664,7 +662,6 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       };
 
       await transporter.sendMail(mailOptions);
-      console.log('📧 Meeting link email sent to:', recipients);
     }
 
     res.json({

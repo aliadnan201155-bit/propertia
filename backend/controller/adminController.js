@@ -437,7 +437,6 @@ export const updateAppointmentStatus = async (req, res) => {
       };
 
       await transporter.sendMail(mailOptions);
-      console.log('📧 Status update email sent to:', recipients);
     }
 
     res.json({
