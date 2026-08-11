@@ -241,7 +241,14 @@ export const updateAppointmentStatus = async (req, res) => {
       appointmentId,
       { status },
       { new: true }
-    ).populate('propertyId userId');
+    ).populate({
+      path: 'propertyId',
+      select: 'title location userId',
+      populate: {
+        path: 'userId',
+        select: 'name email'
+      }
+    }).populate('userId', 'name email');
 
     if (!appointment) {
       return res.status(404).json({
@@ -250,15 +257,24 @@ export const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    // Send email notification
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: appointment.userId.email,
-      subject: `Viewing Appointment ${status.charAt(0).toUpperCase() + status.slice(1)} - Propertia`,
-      html: getEmailTemplate(appointment, status)
-    };
+    // Send email notification to other participant(s) (exclude updater)
+    const customerEmail = appointment.userId?.email;
+    const ownerEmail = appointment.propertyId?.userId?.email;
+    const updaterEmail = req.user?.email;
+    const recipients = Array.from(new Set([customerEmail, ownerEmail].filter(Boolean)))
+      .filter(email => email !== updaterEmail);
 
-    await transporter.sendMail(mailOptions);
+    if (recipients.length > 0) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: recipients,
+        subject: `Viewing Appointment ${status.charAt(0).toUpperCase() + status.slice(1)} - Propertia`,
+        html: getEmailTemplate(appointment, status)
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log('📧 Status update email sent to:', recipients);
+    }
 
     res.json({
       success: true,
@@ -290,6 +306,14 @@ export const scheduleViewing = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Property not found'
+      });
+    }
+
+    // Prevent owner from booking their own property
+    if (property.userId?._id?.toString() === userId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot schedule a viewing for your own property'
       });
     }
 
@@ -328,19 +352,22 @@ export const scheduleViewing = async (req, res) => {
     };
 
     await transporter.sendMail(userMailOptions);
+    console.log('📧 Customer booking email sent to:', req.user.email);
 
-    const adminMailOptions = {
-      from: process.env.EMAIL,
-      to: property.userId.email,
-      subject: "🔔 New Appointment Request - Action Required",
-      html: getAdminAppointmentNotificationTemplate(appointment, req.user)
-    };
+    if (property.userId?.email) {
+      const adminMailOptions = {
+        from: process.env.EMAIL,
+        to: property.userId.email,
+        subject: "🔔 New Appointment Request - Action Required",
+        html: getAdminAppointmentNotificationTemplate(appointment, req.user)
+      };
 
-    try {
-      await transporter.sendMail(adminMailOptions);
-      console.log('✅ Property owner notification email sent successfully');
-    } catch (emailError) {
-      console.error('❌ Failed to send property owner notification email:', emailError);
+      try {
+        await transporter.sendMail(adminMailOptions);
+        console.log('📧 Property owner booking email sent to:', property.userId.email);
+      } catch (emailError) {
+        console.error('❌ Failed to send property owner notification email:', emailError);
+      }
     }
 
     res.status(201).json({
@@ -362,8 +389,15 @@ export const cancelAppointment = async (req, res) => {
   try {
     const appointmentId = req.params.id;
     const appointment = await Appointment.findById(appointmentId)
-      .populate('propertyId', 'title')
-      .populate('userId', 'email');
+      .populate({
+        path: 'propertyId',
+        select: 'title location userId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
+      .populate('userId', 'name email');
 
     if (!appointment) {
       return res.status(404).json({
@@ -392,26 +426,34 @@ export const cancelAppointment = async (req, res) => {
     appointment.cancelReason = req.body.reason || 'Cancelled by user';
     await appointment.save();
 
-    // Send cancellation email
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: appointment.userId.email,
-      subject: 'Appointment Cancelled - Propertia',
-      html: `
-        <div style="max-width: 600px; margin: 20px auto; padding: 30px; background: #ffffff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          <h1 style="color: #2563eb; text-align: center;">Appointment Cancelled</h1>
-          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p>Your viewing appointment for <strong>${appointment.propertyId.title}</strong> has been cancelled.</p>
-            <p><strong>Date:</strong> ${new Date(appointment.date).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> ${appointment.time}</p>
-            ${appointment.cancelReason ? `<p><strong>Reason:</strong> ${appointment.cancelReason}</p>` : ''}
-          </div>
-          <p style="color: #4b5563;">You can schedule another viewing at any time.</p>
-        </div>
-      `
-    };
+    // Send cancellation email to other participant(s) (exclude updater)
+    const customerEmail = appointment.userId?.email;
+    const ownerEmail = appointment.propertyId?.userId?.email;
+    const updaterEmail = req.user?.email;
+    const recipients = Array.from(new Set([customerEmail, ownerEmail].filter(Boolean)))
+      .filter(email => email !== updaterEmail);
 
-    await transporter.sendMail(mailOptions);
+    if (recipients.length > 0) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: recipients,
+        subject: 'Appointment Cancelled - Propertia',
+        html: `
+          <div style="max-width: 600px; margin: 20px auto; padding: 30px; background: #ffffff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #2563eb; text-align: center;">Appointment Cancelled</h1>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p>Your viewing appointment for <strong>${appointment.propertyId.title}</strong> has been cancelled.</p>
+              <p><strong>Date:</strong> ${new Date(appointment.date).toLocaleDateString()}</p>
+              <p><strong>Time:</strong> ${appointment.time}</p>
+              ${appointment.cancelReason ? `<p><strong>Reason:</strong> ${appointment.cancelReason}</p>` : ''}
+            </div>
+            <p style="color: #4b5563;">You can schedule another viewing at any time.</p>
+          </div>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+    }
 
     res.json({
       success: true,
@@ -590,7 +632,14 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       appointmentId,
       { meetingLink },
       { new: true }
-    ).populate('propertyId userId');
+    ).populate({
+      path: 'propertyId',
+      select: 'title location userId',
+      populate: {
+        path: 'userId',
+        select: 'name email'
+      }
+    }).populate('userId', 'name email');
 
     if (!appointment) {
       return res.status(404).json({
@@ -599,15 +648,24 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       });
     }
 
-    // Send email notification with meeting link
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: appointment.userId.email,
-      subject: "Meeting Link Updated - Propertia",
-      html: getMeetingLinkEmailTemplate(appointment, meetingLink)
-    };
+    // Send email notification with meeting link to other participant(s) (exclude updater)
+    const customerEmail = appointment.userId?.email;
+    const ownerEmail = appointment.propertyId?.userId?.email;
+    const updaterEmail = req.user?.email;
+    const recipients = Array.from(new Set([customerEmail, ownerEmail].filter(Boolean)))
+      .filter(email => email !== updaterEmail);
 
-    await transporter.sendMail(mailOptions);
+    if (recipients.length > 0) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: recipients,
+        subject: "Meeting Link Updated - Propertia",
+        html: getMeetingLinkEmailTemplate(appointment, meetingLink)
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log('📧 Meeting link email sent to:', recipients);
+    }
 
     res.json({
       success: true,
@@ -851,6 +909,37 @@ export const adminCreateAppointment = async (req, res) => {
       notes,
     });
 
+    // Notify customer and property owner on appointment creation
+    const propertyOwner = await User.findById(property.userId);
+    const customerEmail = user?.email;
+    const ownerEmail = propertyOwner?.email;
+
+    if (customerEmail) {
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL,
+          to: customerEmail,
+          subject: "Viewing Scheduled - Propertia",
+          html: getSchedulingEmailTemplate(appointment, date, time, notes)
+        });
+      } catch (e) {
+        console.error("❌ Failed to send customer booking email:", e);
+      }
+    }
+
+    if (ownerEmail && ownerEmail !== customerEmail) {
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL,
+          to: ownerEmail,
+          subject: "🔔 New Appointment Request - Action Required",
+          html: getAdminAppointmentNotificationTemplate(appointment, user)
+        });
+      } catch (e) {
+        console.error("❌ Failed to send owner booking email:", e);
+      }
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Appointment created successfully',
@@ -880,32 +969,64 @@ export const adminUpdateAppointment = async (req, res) => {
       }
     }
 
-    // Fetch the old appointment to check if status changed
-    const oldAppointment = await Appointment.findById(req.params.id).populate('propertyId userId');
-    const oldStatus = oldAppointment ? oldAppointment.status : null;
+    // Fetch existing appointment to compare changes
+    const oldAppointment = await Appointment.findById(req.params.id);
+    if (!oldAppointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
 
     const appointment = await Appointment.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
-    }).populate('propertyId userId');
+    }).populate({
+      path: 'propertyId',
+      select: 'title location userId',
+      populate: {
+        path: 'userId',
+        select: 'name email'
+      }
+    }).populate('userId', 'name email');
 
     if (!appointment) {
       return res.status(404).json({ success: false, message: 'Appointment not found' });
     }
 
-    // Send email to the requester if status has changed
-    if (updates.status && updates.status !== oldStatus && appointment.userId && appointment.userId.email) {
-      try {
-        const mailOptions = {
-          from: process.env.EMAIL,
-          to: appointment.userId.email,
-          subject: `Viewing Appointment ${updates.status.charAt(0).toUpperCase() + updates.status.slice(1)} - Propertia`,
-          html: getEmailTemplate(appointment, updates.status),
-        };
-        await transporter.sendMail(mailOptions);
-        console.log(`✅ Email sent to ${appointment.userId.email} for status: ${updates.status}`);
-      } catch (emailError) {
-        console.error('❌ Failed to send appointment status email:', emailError);
+    // Trigger notification only if relevant fields changed
+    const statusChanged = updates.status && updates.status !== oldAppointment.status;
+    const meetingLinkChanged = updates.meetingLink && updates.meetingLink !== oldAppointment.meetingLink;
+    const dateChanged = updates.date && new Date(updates.date).getTime() !== new Date(oldAppointment.date).getTime();
+    const timeChanged = updates.time && updates.time !== oldAppointment.time;
+
+    if (statusChanged || meetingLinkChanged || dateChanged || timeChanged) {
+      const customerEmail = appointment.userId?.email;
+      const ownerEmail = appointment.propertyId?.userId?.email;
+      const updaterEmail = req.user?.email;
+      const recipients = Array.from(new Set([customerEmail, ownerEmail].filter(Boolean)))
+        .filter(email => email !== updaterEmail);
+
+      if (recipients.length > 0) {
+        let subject = '';
+        let html = '';
+
+        if (statusChanged) {
+          subject = `Viewing Appointment ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)} - Propertia`;
+          html = getEmailTemplate(appointment, appointment.status);
+        } else if (meetingLinkChanged) {
+          subject = "Meeting Link Updated - Propertia";
+          html = getMeetingLinkEmailTemplate(appointment, appointment.meetingLink);
+        } else if (dateChanged || timeChanged) {
+          subject = '📅 Appointment Rescheduled - Propertia';
+          html = getAppointmentRescheduleTemplate(appointment, oldAppointment.date, oldAppointment.time, appointment.date, appointment.time);
+        }
+
+        if (subject && html) {
+          await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: recipients,
+            subject,
+            html
+          });
+        }
       }
     }
 

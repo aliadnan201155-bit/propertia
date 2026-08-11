@@ -388,8 +388,14 @@ export const updateAppointmentStatus = async (req, res) => {
     const { appointmentId, status } = req.body;
     const userId = req.user._id;
 
-    const appointment =
-      await Appointment.findById(appointmentId).populate("propertyId userId");
+    const appointment = await Appointment.findById(appointmentId).populate({
+      path: "propertyId",
+      select: "title location userId",
+      populate: {
+        path: "userId",
+        select: "name email",
+      },
+    }).populate("userId", "name email");
 
     if (!appointment) {
       return res.status(404).json({
@@ -398,13 +404,11 @@ export const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    // Verify that the property belongs to the authenticated user
-    const property = await Property.findOne({
-      _id: appointment.propertyId._id,
-      userId,
-    });
+    // Verify that the property belongs to the authenticated user or user is admin
+    const isOwner = appointment.propertyId?.userId?._id?.toString() === userId.toString();
+    const isAdmin = req.user.role === "admin";
 
-    if (!property) {
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to update this appointment",
@@ -415,17 +419,26 @@ export const updateAppointmentStatus = async (req, res) => {
     appointment.status = status;
     await appointment.save();
 
-    // Send email notification using the template from email.js
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: appointment.userId.email,
-      subject: `Viewing Appointment ${
-        status.charAt(0).toUpperCase() + status.slice(1)
-      } - Propertia`,
-      html: getEmailTemplate(appointment, status),
-    };
+    // Send email notification to other participant(s) (exclude updater)
+    const customerEmail = appointment.userId?.email;
+    const ownerEmail = appointment.propertyId?.userId?.email;
+    const updaterEmail = req.user?.email;
+    const recipients = Array.from(new Set([customerEmail, ownerEmail].filter(Boolean)))
+      .filter(email => email !== updaterEmail);
 
-    await transporter.sendMail(mailOptions);
+    if (recipients.length > 0) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: recipients,
+        subject: `Viewing Appointment ${
+          status.charAt(0).toUpperCase() + status.slice(1)
+        } - Propertia`,
+        html: getEmailTemplate(appointment, status),
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log('📧 Status update email sent to:', recipients);
+    }
 
     res.json({
       success: true,
@@ -446,8 +459,14 @@ export const updateAppointmentMeetingLink = async (req, res) => {
     const { appointmentId, meetingLink } = req.body;
     const userId = req.user._id;
 
-    const appointment =
-      await Appointment.findById(appointmentId).populate("propertyId userId");
+    const appointment = await Appointment.findById(appointmentId).populate({
+      path: "propertyId",
+      select: "title location userId",
+      populate: {
+        path: "userId",
+        select: "name email",
+      },
+    }).populate("userId", "name email");
 
     if (!appointment) {
       return res.status(404).json({
@@ -456,13 +475,11 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       });
     }
 
-    // Verify that the property belongs to the authenticated user
-    const property = await Property.findOne({
-      _id: appointment.propertyId._id,
-      userId,
-    });
+    // Verify that the property belongs to the authenticated user or user is admin
+    const isOwner = appointment.propertyId?.userId?._id?.toString() === userId.toString();
+    const isAdmin = req.user.role === "admin";
 
-    if (!property) {
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to update this appointment",
@@ -473,15 +490,23 @@ export const updateAppointmentMeetingLink = async (req, res) => {
     appointment.meetingLink = meetingLink;
     await appointment.save();
 
-    // Send email notification with meeting link
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: appointment.userId.email,
-      subject: "Meeting Link Updated - Propertia",
-      html: getMeetingLinkEmailTemplate(appointment, meetingLink)
-    };
+    // Send email notification with meeting link to other participant(s) (exclude updater)
+    const customerEmail = appointment.userId?.email;
+    const ownerEmail = appointment.propertyId?.userId?.email;
+    const updaterEmail = req.user?.email;
+    const recipients = Array.from(new Set([customerEmail, ownerEmail].filter(Boolean)))
+      .filter(email => email !== updaterEmail);
 
-    await transporter.sendMail(mailOptions);
+    if (recipients.length > 0) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: recipients,
+        subject: "Meeting Link Updated - Propertia",
+        html: getMeetingLinkEmailTemplate(appointment, meetingLink),
+      };
+
+      await transporter.sendMail(mailOptions);
+    }
 
     res.json({
       success: true,
