@@ -427,16 +427,18 @@ export const updateAppointmentStatus = async (req, res) => {
       .filter(email => email !== updaterEmail);
 
     if (recipients.length > 0) {
+      const propertyTitle = appointment.propertyId?.title || '';
       const mailOptions = {
-        from: process.env.EMAIL,
+        from: process.env.EMAIL || process.env.SMTP_USER,
         to: recipients,
-        subject: `Viewing Appointment ${
+        subject: `[Propertia] Appointment ${
           status.charAt(0).toUpperCase() + status.slice(1)
-        } - Propertia`,
+        }: ${propertyTitle}`.trim(),
         html: getEmailTemplate(appointment, status),
       };
 
       await transporter.sendMail(mailOptions);
+      console.log('📧 Status update email sent to:', recipients, '| Subject:', mailOptions.subject);
     }
 
     res.json({
@@ -497,14 +499,16 @@ export const updateAppointmentMeetingLink = async (req, res) => {
       .filter(email => email !== updaterEmail);
 
     if (recipients.length > 0) {
+      const propertyTitle = appointment.propertyId?.title || '';
       const mailOptions = {
-        from: process.env.EMAIL,
+        from: process.env.EMAIL || process.env.SMTP_USER,
         to: recipients,
-        subject: "Meeting Link Updated - Propertia",
+        subject: `[Propertia] Virtual Meeting Link: ${propertyTitle}`.trim(),
         html: getMeetingLinkEmailTemplate(appointment, meetingLink),
       };
 
       await transporter.sendMail(mailOptions);
+      console.log('📧 Meeting link email sent to:', recipients, '| Subject:', mailOptions.subject);
     }
 
     res.json({
