@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { 
-  Trash2, 
-  Edit3, 
-  Search, 
-  Filter, 
-  Plus, 
+import {
+  Trash2,
+  Edit3,
+  Search,
+  Filter,
+  Plus,
   Home,
   BedDouble,
   Bath,
@@ -19,7 +19,8 @@ import {
   Star,
   ChevronDown,
   RefreshCw,
-  Download
+  Download,
+  X
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -65,10 +66,10 @@ const PropertyListings = ({ adminMode = false }) => {
       const response = await axios.get(endpoint, {
         params: isAdmin
           ? {
-              page,
-              limit,
-              search: appliedSearch || undefined,
-            }
+            page,
+            limit,
+            search: appliedSearch || undefined,
+          }
           : undefined,
         headers: {
           Authorization: `Bearer ${token}`
@@ -115,17 +116,26 @@ const PropertyListings = ({ adminMode = false }) => {
   };
 
   const handleSearch = () => {
-    if (!isAdmin) return;
+    // if (!isAdmin) return;
     setPage(1);
     setAppliedSearch(searchTerm.trim());
+
   };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setAppliedSearch("");
+    setPage(1);
+  };
+
+
 
   const parseAmenities = (amenities) => {
     // If amenities is already a non-empty array, return it
     if (Array.isArray(amenities) && amenities.length > 0) {
       return amenities;
     }
-    
+
     // If it's a string, try to parse it
     if (typeof amenities === 'string') {
       try {
@@ -135,7 +145,7 @@ const PropertyListings = ({ adminMode = false }) => {
         return [];
       }
     }
-    
+
     // Default to empty array
     return [];
   };
@@ -144,7 +154,7 @@ const PropertyListings = ({ adminMode = false }) => {
     if (isAdmin) {
       fetchProperties();
     }
-  }, [isAdmin, page, limit, appliedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAdmin, appliedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isAdmin) {
@@ -158,19 +168,19 @@ const PropertyListings = ({ adminMode = false }) => {
         const token = localStorage.getItem('token');
         const response = isAdmin
           ? await axios.delete(`${backendurl}/api/products/manage/${propertyId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          : await axios.post(
+            `${backendurl}/api/products/remove`,
+            { id: propertyId },
+            {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
-            })
-          : await axios.post(
-              `${backendurl}/api/products/remove`,
-              { id: propertyId },
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
+            }
+          );
 
         if (response.data.success) {
           toast.success("Property removed successfully");
@@ -239,12 +249,12 @@ const PropertyListings = ({ adminMode = false }) => {
 
   const filteredProperties = properties
     .filter(property => {
-      const matchesSearch = !appliedSearch || 
+      const matchesSearch = !appliedSearch ||
         [property.title, property.location, property.type]
           .some(field => field.toLowerCase().includes(appliedSearch.toLowerCase()));
-      
+
       const matchesType = filterType === "all" || property.type.toLowerCase() === filterType.toLowerCase();
-      
+
       return matchesSearch && matchesType;
     })
     .sort((a, b) => {
@@ -281,9 +291,9 @@ const PropertyListings = ({ adminMode = false }) => {
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         duration: 0.6,
         staggerChildren: 0.1
       }
@@ -299,12 +309,12 @@ const PropertyListings = ({ adminMode = false }) => {
 
   const cardVariants = {
     hidden: { opacity: 0, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       scale: 1,
       transition: { duration: 0.3 }
     },
-    hover: { 
+    hover: {
       y: -5,
       scale: 1.02,
       transition: { duration: 0.2 }
@@ -313,7 +323,7 @@ const PropertyListings = ({ adminMode = false }) => {
 
   if (loading) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="min-h-screen pt-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100"
@@ -324,7 +334,7 @@ const PropertyListings = ({ adminMode = false }) => {
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-6"
           />
-          <motion.h3 
+          <motion.h3
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -332,7 +342,7 @@ const PropertyListings = ({ adminMode = false }) => {
           >
             Loading Properties
           </motion.h3>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -346,7 +356,7 @@ const PropertyListings = ({ adminMode = false }) => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -354,7 +364,7 @@ const PropertyListings = ({ adminMode = false }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="mb-8"
         >
@@ -396,7 +406,7 @@ const PropertyListings = ({ adminMode = false }) => {
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">Refresh</span>
               </motion.button>
-              
+
               <Link to={addPropertyPath}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -412,7 +422,7 @@ const PropertyListings = ({ adminMode = false }) => {
         </motion.div>
 
         {/* Stats Cards */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
@@ -430,7 +440,7 @@ const PropertyListings = ({ adminMode = false }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
@@ -444,7 +454,7 @@ const PropertyListings = ({ adminMode = false }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
@@ -458,7 +468,7 @@ const PropertyListings = ({ adminMode = false }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
@@ -475,8 +485,8 @@ const PropertyListings = ({ adminMode = false }) => {
         </motion.div>
 
         {/* Search and Filters */}
-        <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           variants={itemVariants}
           className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8"
@@ -492,15 +502,33 @@ const PropertyListings = ({ adminMode = false }) => {
                   type="text"
                   placeholder="Search by title, location, or property type..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    if (e.target.value === "") {
+                      setAppliedSearch("");
+                      setPage(1);
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       handleSearch();
                     }
                   }}
-                  className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="block w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
+
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+
+
               </div>
 
               <button
@@ -550,21 +578,19 @@ const PropertyListings = ({ adminMode = false }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === 'grid' 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
+                  className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-gray-400 hover:text-gray-600'
+                    }`}
                 >
                   <Grid3X3 className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === 'list' 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
+                  className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-gray-400 hover:text-gray-600'
+                    }`}
                 >
                   <List className="w-5 h-5" />
                 </button>
@@ -573,8 +599,8 @@ const PropertyListings = ({ adminMode = false }) => {
           </div>
         </motion.div>
         {/* Property Grid */}
-        <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           variants={itemVariants}
           className="space-y-6"
@@ -593,8 +619,8 @@ const PropertyListings = ({ adminMode = false }) => {
                   No properties found
                 </h3>
                 <p className="text-gray-500 mb-6">
-                  {appliedSearch || filterType !== "all" 
-                    ? "Try adjusting your search criteria or filters" 
+                  {appliedSearch || filterType !== "all"
+                    ? "Try adjusting your search criteria or filters"
                     : "Get started by adding your first property"
                   }
                 </p>
@@ -613,11 +639,10 @@ const PropertyListings = ({ adminMode = false }) => {
               </div>
             </motion.div>
           ) : (
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
-                : 'grid-cols-1'
-            }`}>
+            <div className={`grid gap-6 ${viewMode === 'grid'
+              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+              : 'grid-cols-1'
+              }`}>
               <AnimatePresence>
                 {filteredProperties.map((property, index) => (
                   <motion.div
@@ -628,16 +653,14 @@ const PropertyListings = ({ adminMode = false }) => {
                     exit={{ opacity: 0, scale: 0.95 }}
                     whileHover="hover"
                     transition={{ delay: index * 0.05 }}
-                    className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group ${
-                      viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
-                    }`}
+                    className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
+                      }`}
                   >
                     {/* Property Image */}
-                    <div className={`relative ${
-                      viewMode === 'list' 
-                        ? 'sm:w-80 h-48 sm:h-auto flex-shrink-0' 
-                        : 'h-56'
-                    }`}>
+                    <div className={`relative ${viewMode === 'list'
+                      ? 'sm:w-80 h-48 sm:h-auto flex-shrink-0'
+                      : 'h-56'
+                      }`}>
                       <img
                         src={property.image[0] || "/placeholder.jpg"}
                         alt={property.title}
@@ -645,7 +668,7 @@ const PropertyListings = ({ adminMode = false }) => {
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      
+
                       {/* Property Type Badge */}
                       <div className="absolute top-4 left-4">
                         <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 text-sm font-medium rounded-full shadow-sm">
@@ -655,11 +678,10 @@ const PropertyListings = ({ adminMode = false }) => {
 
                       {/* Status Badge */}
                       <div className="absolute top-4 right-4">
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full backdrop-blur-sm shadow-sm ${
-                          `${property.availability || ''}`.toLowerCase().trim() === 'rent'
-                            ? 'bg-green-500/90 text-white' 
-                            : 'bg-blue-500/90 text-white'
-                        }`}>
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full backdrop-blur-sm shadow-sm ${`${property.availability || ''}`.toLowerCase().trim() === 'rent'
+                          ? 'bg-green-500/90 text-white'
+                          : 'bg-blue-500/90 text-white'
+                          }`}>
                           For {`${property.availability || ''}`.toLowerCase().trim() === 'buy' || `${property.availability || ''}`.toLowerCase().trim() === 'sale' || `${property.availability || ''}`.toLowerCase().trim() === 'for sale'
                             ? 'Sale'
                             : `${property.availability || ''}`.toLowerCase().trim() === 'rent' || `${property.availability || ''}`.toLowerCase().trim() === 'for rent'
@@ -671,7 +693,7 @@ const PropertyListings = ({ adminMode = false }) => {
 
                       {/* Action Buttons */}
                       <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <Link 
+                        <Link
                           to={getEditPath(property._id)}
                           className="p-2 bg-white/90 backdrop-blur-sm text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-all duration-200 shadow-lg"
                         >
@@ -766,7 +788,7 @@ const PropertyListings = ({ adminMode = false }) => {
                             Listed {new Date(property.createdAt).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Link 
+                            <Link
                               to={getEditPath(property._id)}
                               className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                             >
@@ -824,11 +846,10 @@ const PropertyListings = ({ adminMode = false }) => {
                     <button
                       key={`page-${pageItem}`}
                       onClick={() => setPage(pageItem)}
-                      className={`rounded-lg border px-3 py-1 text-sm ${
-                        page === pageItem
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className={`rounded-lg border px-3 py-1 text-sm ${page === pageItem
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                        }`}
                     >
                       {pageItem}
                     </button>

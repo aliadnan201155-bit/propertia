@@ -24,6 +24,15 @@ const MyMeetings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [meetingLink, setMeetingLink] = useState("");
 
+  const formatTime = (time) => {
+    if (!time) return "";
+    const [hourStr, minuteStr] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+    const period = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${hour}:${minuteStr} ${period}`;
+  };
+
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -233,7 +242,7 @@ const MyMeetings = () => {
                           </p>
                           <div className="flex items-center text-sm text-gray-600">
                             <Clock className="w-4 h-4 mr-1 text-purple-400" />
-                            {appointment.time}
+                            {formatTime(appointment.time)}
                           </div>
                         </div>
                       </div>

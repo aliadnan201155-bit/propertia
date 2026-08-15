@@ -36,6 +36,15 @@ const AdminAppointments = () => {
     notes: "",
   });
 
+  const formatTime = (time) => {
+    if (!time) return "";
+    const [hourStr, minuteStr] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+    const period = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${hour}:${minuteStr} ${period}`;
+  };
+
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -313,7 +322,7 @@ const AdminAppointments = () => {
                       <td className="px-4 py-3">
                         <div>
                           <div className="text-sm text-gray-900 flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(apt.date).toLocaleDateString()}</div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1"><Clock className="w-3 h-3" />{apt.time}</div>
+                          <div className="text-xs text-gray-500 flex items-center gap-1"><Clock className="w-3 h-3" />{formatTime(apt.time)}</div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
