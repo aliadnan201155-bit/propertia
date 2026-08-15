@@ -338,6 +338,7 @@ export const exportAllAppointments = async (req, res) => {
             select: "name email phone",
           },
         })
+        .populate("userId", "name email phone")  // ← Fix: populate visitor info
         .sort({ createdAt: -1 });
     } else {
       // Get appointments for user's properties (all records for export)
@@ -352,19 +353,29 @@ export const exportAllAppointments = async (req, res) => {
     }
 
     // Transform appointments to flatten nested fields for CSV
-    const csvData = appointments.map(appointment => ({
-      propertyTitle: appointment.propertyId?.title || 'N/A',
-      propertyLocation: appointment.propertyId?.location || 'N/A',
-      userName: appointment.userId?.name || 'N/A',
-      userEmail: appointment.userId?.email || 'N/A',
-      date: appointment.date ? new Date(appointment.date).toLocaleDateString() : 'N/A',
-      time: appointment.time || 'N/A',
-      status: appointment.status || 'N/A',
-      meetingLink: appointment.meetingLink || 'N/A',
-      meetingPlatform: appointment.meetingPlatform || 'N/A',
-      notes: appointment.notes || 'N/A',
-      createdAt: appointment.createdAt ? new Date(appointment.createdAt).toLocaleString() : 'N/A',
-    }));
+    // myMeetings=true  → Property Visits  → userName/userEmail = property owner (propertyId.userId)
+    // myMeetings=false → Client Meetings  → userName/userEmail = visitor/client (appointment.userId)
+    const csvData = appointments.map(appointment => {
+      const isMyVisit = myMeetings === "true";
+      return {
+        propertyTitle: appointment.propertyId?.title || 'N/A',
+        propertyLocation: appointment.propertyId?.location || 'N/A',
+        // Property Visits: show property owner info; Client Meetings: show client/visitor info
+        userName: isMyVisit
+          ? (appointment.propertyId?.userId?.name || 'N/A')   // property owner ka naam
+          : (appointment.userId?.name || 'N/A'),   // visitor/client ka naam
+        userEmail: isMyVisit
+          ? (appointment.propertyId?.userId?.email || 'N/A')   // property owner ki email
+          : (appointment.userId?.email || 'N/A'),   // visitor/client ki email
+        date: appointment.date ? new Date(appointment.date).toLocaleDateString() : 'N/A',
+        time: appointment.time || 'N/A',
+        status: appointment.status || 'N/A',
+        meetingLink: appointment.meetingLink || 'N/A',
+        meetingPlatform: appointment.meetingPlatform || 'N/A',
+        notes: appointment.notes || 'N/A',
+        createdAt: appointment.createdAt ? new Date(appointment.createdAt).toLocaleString() : 'N/A',
+      };
+    });
 
     const json2csvParser = new Parser({
       fields: ['propertyTitle', 'propertyLocation', 'userName', 'userEmail', 'date', 'time', 'status', 'meetingLink', 'meetingPlatform', 'notes', 'createdAt']
@@ -431,9 +442,8 @@ export const updateAppointmentStatus = async (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL || process.env.SMTP_USER,
         to: recipients,
-        subject: `[Propertia] Appointment ${
-          status.charAt(0).toUpperCase() + status.slice(1)
-        }: ${propertyTitle}`.trim(),
+        subject: `[Propertia] Appointment ${status.charAt(0).toUpperCase() + status.slice(1)
+          }: ${propertyTitle}`.trim(),
         html: getEmailTemplate(appointment, status),
       };
 

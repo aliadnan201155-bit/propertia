@@ -110,6 +110,56 @@ function buildLocationPatterns(locationStr) {
     }));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PROPERTY ID / CODE SEARCH  (e.g. "k-009", "b-12", "show me k009")
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Extracts a property code from the user message.
+ * Matches patterns like: k-009, K-009, k009, b-12, p45, r-1 etc.
+ * Returns the code string (e.g. "k-009") or null.
+ */
+function extractPropertyCode(text) {
+    // Match a letter followed by optional dash then digits (e.g. k-009, b12, K-009)
+    const match = text.match(/\b([a-zA-Z])-?(\d{1,5})\b/);
+    if (!match) return null;
+    // Reconstruct with dash: "k" + "009" → "k-009"
+    return `${match[1].toLowerCase()}-${match[2]}`;
+}
+
+async function handlePropertyCodeSearch(code, language) {
+    // Try exact title match first (case-insensitive)
+    const results = await Property.find({
+        title: { $regex: `^${code}$`, $options: 'i' }
+    }).populate('userId', 'name email').lean();
+
+    // Fallback: partial title match (e.g. "k-009" inside a longer title)
+    const fallback = results.length === 0
+        ? await Property.find({
+            title: { $regex: code.replace('-', '[\\-]?'), $options: 'i' }
+        }).populate('userId', 'name email').lean()
+        : [];
+
+    const all = [...results, ...fallback];
+
+    if (all.length === 0) {
+        const msgs = {
+            english: `😔 No property found with ID "${code.toUpperCase()}".\n\n💡 Try:\n• "Show me 3 bedroom house in DHA"\n• "Apartment for rent under 50 lakh"`,
+            roman_urdu: `😔 "${code.toUpperCase()}" ID wali koi property nahi mili.\n\n💡 Try karein:\n• "3 bedroom ghar DHA mein"\n• "Rent ke liye apartment"`,
+            mixed: `😔 Property "${code.toUpperCase()}" nahi mili.\n\n💡 Try:\n• "3 bedroom house in DHA"\n• "Apartment for rent"`
+        };
+        return { success: true, reply: msgs[language] || msgs.mixed, totalCount: 0 };
+    }
+
+    const label = { english: 'property', roman_urdu: 'property', mixed: 'property' };
+    return {
+        success: true,
+        reply: `🎯 ${all.length} ${label[language] || 'property'} found for ID "${code.toUpperCase()}"!\n\n💚 Click "View Full Details" for more info!`,
+        results: all.map((p, i) => formatProperty(p, String.fromCharCode(65 + i))),
+        totalCount: all.length
+    };
+}
+
 function isOffTopicQuestion(text) {
     const lower = text.toLowerCase();
 
@@ -683,6 +733,19 @@ export const chat = async (req, res) => {
         } catch (err) {
             console.error('Error loading locations:', err.message);
         }
+
+        // ── Property ID / Code search (e.g. "show me k-009", "k-009 dikhao") ─
+        // Run BEFORE gibberish check — property codes have no vowels and would
+        // otherwise be wrongly rejected.
+        const propertyCode = extractPropertyCode(text);
+        if (propertyCode) {
+            const langHint = /dikhao|batao|karao|mil/i.test(text) ? 'roman_urdu'
+                : /show|find|search|get/i.test(text) ? 'english'
+                    : 'mixed';
+            const codeResponse = await handlePropertyCodeSearch(propertyCode, langHint);
+            return res.json(codeResponse);
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         // Off-topic check
         if (isOffTopicQuestion(text)) {
