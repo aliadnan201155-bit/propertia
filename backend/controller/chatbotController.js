@@ -286,13 +286,15 @@ IMPORTANT:
 
         const response = await groq.chat.completions.create({
             messages: [{ role: 'user', content: prompt }],
-            model: 'llama-3.3-70b-versatile',
+            model: 'qwen/qwen3.6-27b',
             temperature: 0.05,
-            max_completion_tokens: 300,
+            max_completion_tokens: 500,
+            reasoning_effort: 'none', // skip <think> chain-of-thought, this is structured JSON extraction
+            reasoning_format: 'hidden', // don't leak <think> tags into content if reasoning still occurs
         });
 
         let text = response.choices[0]?.message?.content || '';
-        text = text.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
+        text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) throw new Error('No JSON in response');
 
